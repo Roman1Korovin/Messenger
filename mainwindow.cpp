@@ -11,11 +11,21 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("users.db");
+
+    if (!db.open()) {
+        qDebug() << "Ошибка подключения к базе данных:" << db.lastError().text();
+    } else {
+        qDebug() << "Соединение с базой данных успешно!";
+    }
+
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    delete ui; 
+    db.close();
 }
 
 
@@ -28,7 +38,7 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::on_registerButton_clicked()
 {
 
-    Registration *window = new Registration(this);
+    Registration *window = new Registration(this, db);
     window->setModal(true);
     window->exec();
     delete window;
