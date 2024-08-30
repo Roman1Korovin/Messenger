@@ -67,7 +67,7 @@
       </layout>
      </widget>
     </item>
-    <item alignment="Qt::AlignHCenter">
+    <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
      <widget class="QFrame" name="frame">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -114,12 +114,15 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit"/>
+        <widget class="QLineEdit" name="loginEdit"/>
        </item>
        <item>
-        <widget class="QLabel" name="label_5">
+        <widget class="QLabel" name="loginErrorLabel">
          <property name="enabled">
           <bool>true</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: rgb(255, 0, 0);</string>
          </property>
          <property name="text">
           <string>Неверный логин</string>
@@ -140,7 +143,7 @@
       <property name="minimumSize">
        <size>
         <width>250</width>
-        <height>80</height>
+        <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
@@ -176,7 +179,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_2">
+        <widget class="QLineEdit" name="passwordEdit">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -186,9 +189,22 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_4">
+        <spacer name="verticalSpacer_3">
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="passwordErrorLabel">
          <property name="enabled">
           <bool>true</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: rgb(255, 0, 0);</string>
          </property>
          <property name="text">
           <string>Неверный пароль</string>

@@ -17,16 +17,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    authorization.cpp \
     main.cpp \
-    mainwindow.cpp \
+    messengerform.cpp \
     registration.cpp
 
 HEADERS += \
-    mainwindow.h \
+    authorization.h \
+    messengerform.h \
     registration.h
 
 FORMS += \
-    mainwindow.ui \
+    authorization.ui \
+    messengerform.ui \
     registration.ui
 
 # Default rules for deployment.
