@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include "QTcpSocket"
+#include "QTime"
+#include <QKeyEvent>
 
 namespace Ui {
 class messenger;
@@ -16,18 +18,22 @@ public:
     explicit Messenger(QWidget *parent = nullptr);
     ~Messenger();
 
+
 private:
     Ui::messenger *ui;
     QTcpSocket *socket;
-    QByteArray Data;
+    quint16 nextBlockSize;
+
     void SendToServer(const QString &str);
+
+
 
 public slots:
     void slotReadyRead();
 private slots:
     void on_sendButton_clicked();
-    void on_lineEdit_returnPressed();
-    void on_lineEdit_textChanged(const QString &arg1);
+    void on_sendEnter_pressed();
+    void on_textEdit_textChanged();
 };
 
 #endif // MESSENGER_H

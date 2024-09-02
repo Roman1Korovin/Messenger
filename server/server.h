@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QDataStream>
 #include <QString>
+#include <QTime>
 
 class Server : public QTcpServer
 {
@@ -15,12 +16,12 @@ public:
     Server();
 
 private:
-    QVector<QTcpSocket*> Sockets;  // Хранит указатели на активные соединения
-    void SendToClient(QTcpSocket *socket, const QString &str);  // Метод для отправки данных конкретному клиенту
-
+    QVector<QTcpSocket*> Sockets;
+    void SendToClient(QTcpSocket *socket, const QString &str);
+    quint16 nextBlockSize;
 public slots:
-    void incomingConnection(qintptr socketDescriptor) override;  // Обработка нового входящего соединения
-    void slotReadyRead();  // Обработка данных, поступивших от клиента
+    void incomingConnection(qintptr socketDescriptor) override;
+    void slotReadyRead();
 };
 
 #endif // SERVER_H

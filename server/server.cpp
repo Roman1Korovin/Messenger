@@ -10,6 +10,7 @@ Server::Server()
     {
         qDebug() << "Server failed to start";
     }
+    nextBlockSize=0;
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
@@ -41,11 +42,32 @@ void Server::slotReadyRead()
 
     if (in.status() == QDataStream::Ok)
     {
-        qDebug() << "Reading data...";
-        QString str;
-        in >> str;
-        qDebug() << "Received:" << str;
-        SendToClient(socket, str);
+        for (;;)
+        {
+            if(nextBlockSize==0)
+            {
+                qDebug() << "nextBlockSize = 0";
+                if(socket->bytesAvailable()<2)
+                {
+                    qDebug() <<"Data <2, break";
+                    break;
+                }
+                in>>nextBlockSize;
+                qDebug()<<"nextBlockSize = " << nextBlockSize;
+            }
+            if(socket->bytesAvailable()<nextBlockSize)
+            {
+                qDebug()<<"Data not full, break";
+                break;
+            }
+            QString str;
+            QTime time;
+            in >> time >> str;
+            qDebug()<<"Recieved:"<<str;
+            nextBlockSize=0;
+            SendToClient(socket,str);
+            break;
+        }
 
 
     }
@@ -60,6 +82,13 @@ void Server::SendToClient(QTcpSocket *socket, const QString &str)
     QByteArray Data;
     QDataStream out(&Data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_14);
-    out << str;
+
+    // Форматирование времени без секунд
+    QTime time = QTime::currentTime();
+    QString timeStr = time.toString("hh:mm");
+
+    out << quint16(0)<<timeStr <<str;
+    out.device()->seek(0);
+    out<<quint16(Data.size()-sizeof(quint16));
     socket->write(Data);
 }

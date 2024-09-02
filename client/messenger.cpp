@@ -1,14 +1,20 @@
 #include "messenger.h"
 #include "ui_messenger.h"
+#include "textEdit.h"
 
 
 Messenger::Messenger(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::messenger)
+    ui(new Ui::messenger),
+    nextBlockSize(0)
+
 {
     ui->setupUi(this);
-    ui->lineEdit->setFocus();
+
+    //замена элемента textEdit
+
     ui->sendButton->setEnabled(false);
+    ui->textEdit->setFocus();
 
     socket = new QTcpSocket(this);
     socket->connectToHost("127.0.0.1", 2323);
@@ -17,6 +23,8 @@ Messenger::Messenger(QWidget *parent) :
     connect(socket, &QTcpSocket::disconnected, this, []() {
         qDebug() << "Disconnected from server";
     });
+
+    connect(ui->textEdit,&MyTextEdit::enterPressed, this, &Messenger::on_sendEnter_pressed);
 }
 
 Messenger::~Messenger()
@@ -24,12 +32,16 @@ Messenger::~Messenger()
     delete ui;
 }
 
+
+
 void Messenger::SendToServer(const QString &str)
 {
     QByteArray data;
     QDataStream out(&data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_14);
-    out << str;
+    out << quint16(0) << QTime::currentTime()<< str;
+    out.device()->seek(0);
+    out<<quint16(data.size()-sizeof(quint16));
 
     qint64 bytesWritten = socket->write(data);
     if (bytesWritten == -1) {
@@ -38,7 +50,7 @@ void Messenger::SendToServer(const QString &str)
         qDebug() << "Sent" << bytesWritten << "bytes to server";
     }
 
-    ui->lineEdit->clear();
+    ui->textEdit->clear();
 }
 
 void Messenger::slotReadyRead()
@@ -48,9 +60,27 @@ void Messenger::slotReadyRead()
 
     if (in.status() == QDataStream::Ok)
     {
-        QString str;
-        in >> str;
-        ui->textBrowser->append(str);
+        for (;;)
+        {
+            if(nextBlockSize==0)
+            {
+                if(socket->bytesAvailable()<2)
+                {
+                    break;
+                }
+                in>>nextBlockSize;
+            }
+            if(socket->bytesAvailable()<nextBlockSize)
+            {
+                break;
+            }
+            QString str;
+            QString timeStr;
+            in >> timeStr >> str;
+            nextBlockSize=0;
+            ui->textBrowser->append(timeStr + "  "+str);
+            break;
+        }
     }
     else
     {
@@ -60,18 +90,23 @@ void Messenger::slotReadyRead()
 
 void Messenger::on_sendButton_clicked()
 {
-    SendToServer(ui->lineEdit->text());
-    ui->lineEdit->setFocus();
+
+      SendToServer(ui->textEdit->toPlainText());
+      ui->textEdit->setFocus();
 }
 
-void Messenger::on_lineEdit_returnPressed()
+void Messenger::on_sendEnter_pressed()
 {
-    SendToServer(ui->lineEdit->text());
+    if(ui->textEdit->hasFocus())
+    {
+        SendToServer(ui->textEdit->toPlainText());
+    }
 }
 
-void Messenger::on_lineEdit_textChanged(const QString &text)
+
+void Messenger::on_textEdit_textChanged()
 {
-    if(text=="")
+    if(ui->textEdit->toPlainText().isEmpty())
     {
         ui->sendButton->setEnabled(false);
     }
@@ -80,3 +115,5 @@ void Messenger::on_lineEdit_textChanged(const QString &text)
        ui->sendButton->setEnabled(true);
     }
 }
+
+

@@ -20,12 +20,14 @@ SOURCES += \
     authorization.cpp \
     main.cpp \
     messenger.cpp \
-    registration.cpp
+    registration.cpp \
+    textEdit.cpp
 
 HEADERS += \
     authorization.h \
     messenger.h \
-    registration.h
+    registration.h \
+    textEdit.h
 
 FORMS += \
     authorization.ui \
