@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include "QMessageBox"
 #include "registration.h"
-#include "messengerform.h"
+#include "messenger.h"
 
 
 
@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
 
     ui->setupUi(this);
+
+
 
     //пряче метки ошибок авторизации при инициализации формы
     ui->loginErrorLabel->hide();
@@ -27,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << "Соединение с базой данных успешно!";
     }
 
+
+
 }
 
 MainWindow::~MainWindow()
@@ -38,6 +42,7 @@ MainWindow::~MainWindow()
 //кнопка входа, проверяющая правильность введенных данных
 void MainWindow::on_pushButton_clicked()
 {
+
 
     QString login = ui->loginEdit->text();
     QString password = ui->passwordEdit->text();
@@ -85,7 +90,7 @@ void MainWindow::on_pushButton_clicked()
 
                     ui->passwordErrorLabel->hide();
 
-                    MessengerForm *w = new MessengerForm();
+                    Messenger *w = new Messenger();
                     w->show();
                     this->close();
 
