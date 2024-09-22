@@ -27,7 +27,8 @@ HEADERS += \
     authorization.h \
     messenger.h \
     registration.h \
-    textEdit.h
+    textEdit.h \
+    user.h
 
 FORMS += \
     authorization.ui \

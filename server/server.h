@@ -17,11 +17,12 @@ public:
 
 private:
     QVector<QTcpSocket*> Sockets;
-    void SendToClient(QTcpSocket *socket, const QString &str);
+    void SendToClient(QTcpSocket *socket, const QString &str, const QString &messageType);
     quint16 nextBlockSize;
 public slots:
     void incomingConnection(qintptr socketDescriptor) override;
     void slotReadyRead();
+    void SendClientList();
 };
 
 #endif // SERVER_H

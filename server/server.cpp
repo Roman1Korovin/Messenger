@@ -17,15 +17,26 @@ void Server::incomingConnection(qintptr socketDescriptor)
 {
     QTcpSocket *socket = new QTcpSocket;
     socket->setSocketDescriptor(socketDescriptor);
+
     connect(socket, &QTcpSocket::readyRead, this, &Server::slotReadyRead);
     connect(socket, &QTcpSocket::disconnected, this, [this, socket, socketDescriptor]() {
         qDebug() << "Client disconnected" << socketDescriptor;
         Sockets.removeOne(socket);
         socket->deleteLater();
+
+         // После отключения клиента обновляем список
+        for (QTcpSocket *clientSocket : Sockets) {
+                   SendToClient(clientSocket, QString(), "clientList");
+               }
     });
 
     Sockets.push_back(socket);
     qDebug() << "Client connected:" << socketDescriptor;
+
+    // Отправляем текущий список клиентов всем подключенным клиентам
+       for (QTcpSocket *clientSocket : Sockets) {
+           SendToClient(clientSocket, QString(), "clientList");
+       }
 }
 
 void Server::slotReadyRead()
@@ -65,11 +76,9 @@ void Server::slotReadyRead()
             in >> time >> str;
             qDebug()<<"Recieved:"<<str;
             nextBlockSize=0;
-            SendToClient(socket,str);
+            SendToClient(socket,str,"messasge");
             break;
         }
-
-
     }
     else
     {
@@ -77,7 +86,7 @@ void Server::slotReadyRead()
     }
 }
 
-void Server::SendToClient(QTcpSocket *socket, const QString &str)
+void Server::SendToClient(QTcpSocket *socket, const QString &str, const QString &messageType)
 {
     QByteArray Data;
     QDataStream out(&Data, QIODevice::WriteOnly);
@@ -87,8 +96,21 @@ void Server::SendToClient(QTcpSocket *socket, const QString &str)
     QTime time = QTime::currentTime();
     QString timeStr = time.toString("hh:mm");
 
-    out << quint16(0)<<timeStr <<str;
+    out << quint16(0)<<messageType;
+
+    if (messageType == "message") {
+            out << timeStr << str; // Для текстового сообщения
+        } else if (messageType == "clientList") {
+            QStringList clientList;
+            for (QTcpSocket *clientSocket : Sockets) {
+                clientList.append(QString::number(clientSocket->socketDescriptor()));
+            }
+            out << clientList; // Отправляем список клиентов
+        }
+
     out.device()->seek(0);
     out<<quint16(Data.size()-sizeof(quint16));
     socket->write(Data);
 }
+
+
