@@ -2,9 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "QSqlDatabase"
-#include "QSqlError"
-#include "QSqlQuery"
+
 #include "QDebug"
 
 #include "networkmanager.h"
@@ -21,23 +19,26 @@ class Authorization : public QMainWindow
 
 
 public:
-    Authorization(QWidget *parent = nullptr);
+    Authorization(NetworkManager *netManager,QWidget *parent = nullptr);
     ~Authorization();
+        void reset();
+
+public slots:
+    void slotAuthError(const QString errorType);
 
 private slots:
-    void on_pushButton_clicked();
     void on_registerButton_clicked();
-
-
-
+    void on_authButton_clicked();
 
 private:
     Ui::MainWindow *ui;
-    QSqlDatabase db;
     User* receivedUser;
+    NetworkManager* netManager;
+
+
 
 signals:
-    void signalAuthComplete(const User &user);
+    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
 
 
 

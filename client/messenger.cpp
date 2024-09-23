@@ -15,10 +15,10 @@ Messenger::Messenger(QWidget *parent) :
     netManager->connectToServer();
 
     ui->setupUi(this);
-    auth = new Authorization();
+    auth = new Authorization(netManager);
     auth->show();
 
-   connect(auth, &Authorization::signalAuthComplete,this, &Messenger::slotAuthComplete);
+
 
     ui->stackedWidget->setCurrentIndex(1);
 
@@ -29,13 +29,12 @@ Messenger::Messenger(QWidget *parent) :
     ui->textEdit->setFocus();
 
 
-    connect(netManager, &NetworkManager::messageReceived, this, &Messenger::slotMessageReceived);
-    connect(netManager, &NetworkManager::clientListUpdated, this, &Messenger::slotClientListUpdated);
+    connect(netManager, &NetworkManager::signalAuthComplete,this, &Messenger::slotAuthComplete);
+
+    connect(netManager, &NetworkManager::signalMessageReceived, this, &Messenger::slotMessageReceived);
+    connect(netManager, &NetworkManager::signalClientListUpdated, this, &Messenger::slotClientListUpdated);
     connect(netManager, &NetworkManager::signalErrorOccurred, this, &Messenger::slotErrorOccurred);
     connect(this, &Messenger::signalSendToServer, netManager, &NetworkManager::slotSendToServer);
-
-
-
     connect(ui->textEdit,&MyTextEdit::enterPressed, this, &Messenger::on_sendEnter_pressed);
 }
 
@@ -51,10 +50,12 @@ void Messenger::slotErrorOccurred(QString errorMessage)
     QApplication::exit();
 }
 
-void Messenger::slotAuthComplete(User user)
+void Messenger::slotAuthComplete(const QVariantList userParams)
 {
 
-    currentUser = new User(user);  // Сохраняем информацию о текущем пользователе
+    currentUser = new User(userParams.value(0).toString(),
+                           userParams.value(1).toString(),
+                           userParams.value(2).toString());  // Сохраняем информацию о текущем пользователе
 
     // Обновляем элементы интерфейса
     ui->userButton->setText(currentUser->getUsername());
@@ -63,10 +64,9 @@ void Messenger::slotAuthComplete(User user)
     ui->passwordLabel->setText(ui->passwordLabel->text() + "\n" + currentUser->getPassword());
 
     auth->close();
+    auth->reset();
     this->show();
 }
-
-
 
 
 
@@ -84,8 +84,9 @@ void Messenger::slotClientListUpdated(const QStringList &clients)
 
 void Messenger::on_sendButton_clicked()
 {
-
-      emit signalSendToServer(ui->textEdit->toPlainText());
+    QVariantList message;
+    message<<ui->textEdit->toPlainText();
+    emit signalSendToServer("message",  message);
       ui->textEdit->setFocus();
       ui->textEdit->clear();
 }
@@ -94,7 +95,9 @@ void Messenger::on_sendEnter_pressed()
 {
     if(ui->textEdit->hasFocus())
     {
-       emit signalSendToServer(ui->textEdit->toPlainText());
+        QVariantList messageParams;
+        messageParams<<ui->textEdit->toPlainText();
+        emit signalSendToServer("message",  messageParams);
         ui->textEdit->clear();
     }
 }
@@ -124,8 +127,22 @@ void Messenger::on_userButton_clicked()
 
 void Messenger::on_exitButton_clicked()
 {
-    Authorization *w = new Authorization();
-    w->show();
+    auth->show();
     this->close();
+    this->reset();
 }
+
+void Messenger::reset()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+    ui->textEdit->clear();
+    ui->textBrowser->clear();
+    ui->userSearchEdit->clear();
+
+    ui->usernameLabel->setText("Ваше имя пользователя:");
+    ui->loginLabel->setText("Ваш логин:");
+    ui->passwordLabel->setText("Ваш пароль:");
+}
+
+
 

@@ -2,7 +2,8 @@
 #define REGISTRATION_H
 
 #include <QDialog>
-#include <QSqlDatabase>
+#include "networkmanager.h"
+
 
 namespace Ui {
 class Registration;
@@ -14,18 +15,24 @@ class Registration : public QDialog
 
 
 public:
-    explicit Registration(QWidget *parent = nullptr, QSqlDatabase db = QSqlDatabase());
+    explicit Registration(NetworkManager *netManager,QWidget *parent = nullptr);
     ~Registration();
+
+public slots:
+    void slotRegSuccess();
+    void slotRegError();
 
 private slots:
     void on_confirmButton_clicked();
-
     void on_returnButton_clicked();
 
 
 private:
     Ui::Registration *ui;
-    QSqlDatabase m_db;
+
+signals:
+    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
+
 };
 
 #endif // REGISTRATION_H

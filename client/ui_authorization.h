@@ -45,7 +45,7 @@ public:
     QLabel *passwordErrorLabel;
     QFrame *frame_3;
     QVBoxLayout *verticalLayout_4;
-    QPushButton *pushButton;
+    QPushButton *authButton;
     QSpacerItem *verticalSpacer;
     QPushButton *registerButton;
     QSpacerItem *verticalSpacer_2;
@@ -162,12 +162,12 @@ public:
         verticalLayout_4 = new QVBoxLayout(frame_3);
         verticalLayout_4->setObjectName(QString::fromUtf8("verticalLayout_4"));
         verticalLayout_4->setContentsMargins(-1, 20, -1, 9);
-        pushButton = new QPushButton(frame_3);
-        pushButton->setObjectName(QString::fromUtf8("pushButton"));
-        pushButton->setMinimumSize(QSize(150, 25));
-        pushButton->setMaximumSize(QSize(120, 16777215));
+        authButton = new QPushButton(frame_3);
+        authButton->setObjectName(QString::fromUtf8("authButton"));
+        authButton->setMinimumSize(QSize(150, 25));
+        authButton->setMaximumSize(QSize(120, 16777215));
 
-        verticalLayout_4->addWidget(pushButton, 0, Qt::AlignHCenter);
+        verticalLayout_4->addWidget(authButton, 0, Qt::AlignHCenter);
 
         verticalSpacer = new QSpacerItem(20, 5, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
@@ -209,7 +209,7 @@ public:
         loginErrorLabel->setText(QCoreApplication::translate("MainWindow", "\320\235\320\265\320\262\320\265\321\200\320\275\321\213\320\271 \320\273\320\276\320\263\320\270\320\275", nullptr));
         label_2->setText(QCoreApplication::translate("MainWindow", "\320\237\320\260\321\200\320\276\320\273\321\214", nullptr));
         passwordErrorLabel->setText(QCoreApplication::translate("MainWindow", "\320\235\320\265\320\262\320\265\321\200\320\275\321\213\320\271 \320\277\320\260\321\200\320\276\320\273\321\214", nullptr));
-        pushButton->setText(QCoreApplication::translate("MainWindow", "\320\222\320\276\320\271\321\202\320\270", nullptr));
+        authButton->setText(QCoreApplication::translate("MainWindow", "\320\222\320\276\320\271\321\202\320\270", nullptr));
         registerButton->setText(QCoreApplication::translate("MainWindow", "\320\227\320\260\321\200\320\265\320\263\320\270\321\201\321\202\321\200\320\270\321\200\320\276\320\262\320\260\321\202\321\214\321\201\321\217", nullptr));
     } // retranslateUi
 

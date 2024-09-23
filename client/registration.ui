@@ -112,7 +112,7 @@
           <widget class="QLineEdit" name="loginEdit"/>
          </item>
          <item>
-          <widget class="QLabel" name="identityErrorLabel">
+          <widget class="QLabel" name="identityLogErrorLabel">
            <property name="styleSheet">
             <string notr="true">color: rgb(255, 0, 0);</string>
            </property>
@@ -151,7 +151,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="matchErrorLabel">
+          <widget class="QLabel" name="matchPassErrorLabel">
            <property name="styleSheet">
             <string notr="true">color: rgb(255, 0, 0);</string>
            </property>

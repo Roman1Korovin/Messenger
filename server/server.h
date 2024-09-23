@@ -7,6 +7,9 @@
 #include <QDataStream>
 #include <QString>
 #include <QTime>
+#include "QSqlDatabase"
+#include "QSqlError"
+#include "QSqlQuery"
 
 class Server : public QTcpServer
 {
@@ -14,15 +17,18 @@ class Server : public QTcpServer
 
 public:
     Server();
+    ~Server();
 
-private:
+private:    
     QVector<QTcpSocket*> Sockets;
-    void SendToClient(QTcpSocket *socket, const QString &str, const QString &messageType);
     quint16 nextBlockSize;
+    QSqlDatabase db;
+
 public slots:
     void incomingConnection(qintptr socketDescriptor) override;
     void slotReadyRead();
-    void SendClientList();
+    void SendToClient(QTcpSocket *socket, const QString& messageType, const QVariantList& parameters);
+
 };
 
 #endif // SERVER_H

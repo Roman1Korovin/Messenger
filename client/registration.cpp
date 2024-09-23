@@ -5,16 +5,20 @@
 
 
 
-Registration::Registration(QWidget *parent, QSqlDatabase db ) :
+Registration::Registration(NetworkManager *netManager, QWidget *parent ) :
     QDialog(parent),
-    ui(new Ui::Registration),
-    m_db(db)
+    ui(new Ui::Registration)
+
 {
     ui->setupUi(this);
 
     //прячем метки ошибок регистрации при инициализации формы
-    ui->matchErrorLabel->hide();
-    ui->identityErrorLabel->hide();
+    ui->matchPassErrorLabel->hide();
+    ui->identityLogErrorLabel->hide();
+
+    connect(this, &Registration::signalSendToServer, netManager, &NetworkManager::slotSendToServer);
+    connect(netManager, &NetworkManager::signalRegSuccess,this, &Registration::slotRegSuccess);
+    connect(netManager, &NetworkManager::signalRegError,this, &Registration::slotRegError);
 }
 
 Registration::~Registration()
@@ -22,6 +26,17 @@ Registration::~Registration()
     delete ui;
 }
 
+void Registration::slotRegSuccess()
+{
+    QMessageBox::information(this, "Сообщение", "Регистрация успешна! Выполните вход в окне с авторизацией.");
+    qDebug() << "Пользователь успешно зарегистрирован!";
+    this->close();
+}
+void Registration::slotRegError()
+{
+    ui->identityLogErrorLabel->show();
+    qDebug() <<"Пользователь есть уже";
+}
 //кнопка регистрации, проверяющая приавильность введенных данных
 void Registration::on_confirmButton_clicked()
 {
@@ -61,46 +76,53 @@ void Registration::on_confirmButton_clicked()
 
     if(password!=passwordConfirm )
     {
-        ui->matchErrorLabel->show();
+        ui->matchPassErrorLabel->show();
     }
     else
     {
-        ui->matchErrorLabel->hide();
+        ui->matchPassErrorLabel->hide();
     }
 
     if(!username.isEmpty() && !login.isEmpty() && !password.isEmpty() && password == passwordConfirm)
     {
 
-        QSqlQuery query;
+        QVariantList registerParams;
 
-        query.prepare("SELECT login FROM users WHERE login = :login");
-        query.bindValue(":login", login);
-        if(query.exec())
-        {
-            if(!query.next())
-            {
-                ui->identityErrorLabel->hide();
+        registerParams << username << login << password;
 
-                query.prepare("INSERT INTO users (username, login, password) VALUES (:username, :login, :password)");
-                query.bindValue(":username", username);
-                query.bindValue(":login", login);
-                query.bindValue(":password", password);
+        emit signalSendToServer("register", registerParams);
 
-                if (!query.exec()) {
-                    QMessageBox::critical(this, "Ошибка", "Ошибка обращения к базе данных!");
-                       qDebug() << "Ошибка вставки данных:" << query.lastError().text();
-                   } else {
-                       QMessageBox::information(this, "Сообщение", "Регистрация успешна! Выполните вход в окне с авторизацией.");
-                       qDebug() << "Пользователь успешно зарегистрирован!";
-                       this->close();
-                   }            
-            }
-            else
-            {
-                ui->identityErrorLabel->show();
-                qDebug() <<"Пользователь есть уже";              
-            }
-        }
+
+//        QSqlQuery query;
+
+//        query.prepare("SELECT login FROM users WHERE login = :login");
+//        query.bindValue(":login", login);
+//        if(query.exec())
+//        {
+//            if(!query.next())
+//            {
+//                ui->identityErrorLabel->hide();
+
+//                query.prepare("INSERT INTO users (username, login, password) VALUES (:username, :login, :password)");
+//                query.bindValue(":username", username);
+//                query.bindValue(":login", login);
+//                query.bindValue(":password", password);
+
+//                if (!query.exec()) {
+//                    QMessageBox::critical(this, "Ошибка", "Ошибка обращения к базе данных!");
+//                       qDebug() << "Ошибка вставки данных:" << query.lastError().text();
+//                   } else {
+//                       QMessageBox::information(this, "Сообщение", "Регистрация успешна! Выполните вход в окне с авторизацией.");
+//                       qDebug() << "Пользователь успешно зарегистрирован!";
+//                       this->close();
+//                   }
+//            }
+//            else
+//            {
+//                ui->identityErrorLabel->show();
+//                qDebug() <<"Пользователь есть уже";
+//            }
+//        }
     }
 }
 

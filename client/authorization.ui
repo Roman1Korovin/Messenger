@@ -239,7 +239,7 @@
         <number>9</number>
        </property>
        <item alignment="Qt::AlignHCenter">
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="authButton">
          <property name="minimumSize">
           <size>
            <width>150</width>

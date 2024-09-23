@@ -1,26 +1,16 @@
 #include "authorization.h"
-#include "ui_mainwindow.h"
+#include "ui_authorization.h"
 #include "QMessageBox"
 #include "registration.h"
 #include "messenger.h"
 
 
 
-Authorization::Authorization(QWidget *parent)
+Authorization::Authorization(NetworkManager *netManager, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , netManager(netManager)
 {
-
-
-
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("users.db");
-
-    if (!db.open()) {
-        qDebug() << "Ошибка подключения к базе данных:" << db.lastError().text();
-    } else {
-        qDebug() << "Соединение с базой данных успешно!";
-    }
 
     ui->setupUi(this);
 
@@ -28,25 +18,40 @@ Authorization::Authorization(QWidget *parent)
     ui->loginErrorLabel->hide();
     ui->passwordErrorLabel->hide();
 
+    connect(this, &Authorization::signalSendToServer, netManager, &NetworkManager::slotSendToServer);
+    connect(netManager, &NetworkManager::signalAuthError,this, &Authorization::slotAuthError);
+
 }
 
 Authorization::~Authorization()
 {
-    delete ui; 
-    db.close();
+    delete ui;
+}
+
+void Authorization::slotAuthError(const QString errorType)
+{
+    if(errorType == "logNotFound")
+    {
+        ui->loginErrorLabel->show();
+    }
+    else if(errorType == "invalidPass")
+    {
+        ui->passwordErrorLabel->show();
+    }
 }
 
 //кнопка входа, проверяющая правильность введенных данных
-void Authorization::on_pushButton_clicked()
+void Authorization::on_authButton_clicked()
 {
 
-
-    QString login = ui->loginEdit->text();
-    QString password = ui->passwordEdit->text();
+    QString login = ui->loginEdit->text().trimmed();
+    QString password = ui->passwordEdit->text().trimmed();
 
     if(login.isEmpty())
     {
          ui->loginEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+         ui->loginErrorLabel->hide();
+         ui->passwordErrorLabel->hide();
     }
     else
     {
@@ -56,6 +61,7 @@ void Authorization::on_pushButton_clicked()
     if(password.isEmpty())
     {
          ui->passwordEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+
     }
     else
     {
@@ -64,52 +70,43 @@ void Authorization::on_pushButton_clicked()
 
     if (!login.isEmpty() && !password.isEmpty())
     {
-        QSqlQuery query;
-        query.prepare("SELECT login, password, username FROM users WHERE login = :login");
-        query.bindValue(":login", login);
 
-        if (query.exec()) {
+        ui->loginErrorLabel->hide();
+        ui->passwordErrorLabel->hide();
+
+        QVariantList loginParams;
+        loginParams<<login <<password;
+
+        emit signalSendToServer("login",loginParams);
+    }
+        else {
             ui->loginErrorLabel->hide();
             ui->passwordErrorLabel->hide();
-            if (query.next()) {
-
-
-
-                receivedUser = new User(query.value("username").toString(),
-                                  query.value("login").toString(),
-                                  query.value("password").toString());
-                qDebug() << "Login: " << receivedUser->getLogin();
-                qDebug() << "Password: " << receivedUser->getPassword();
-                qDebug() << "Username: " << receivedUser->getUsername();
-
-
-                if (receivedUser->getPassword() == password) {
-
-                    ui->passwordErrorLabel->hide();
-
-                    emit signalAuthComplete(*receivedUser);
-
-
-
-                } else {
-                    ui->passwordErrorLabel->show();
-                }
-
-            } else {
-                ui->loginErrorLabel->show();
-            }
-        } else {
-            QMessageBox::critical(this, "Ошибка", "Ошибка обращения к базе данных!");
-            qDebug() << "Ошибка выполнения запроса:" << query.lastError().text();
         }
-    }
 }
+
 
 //кнопка для перехда на форму регитсрации
 void Authorization::on_registerButton_clicked()
 {
-    Registration *w = new Registration(this, db);
+        this->reset();
+
+    Registration *w = new Registration(netManager);
     w->setModal(true);
     w->exec();
     delete w;
+
+
 }
+
+void Authorization::reset()
+{
+    ui->loginEdit->clear();
+    ui->loginEdit->setStyleSheet("");
+    ui->passwordEdit->clear();
+    ui->passwordEdit->setStyleSheet("");
+    ui->loginErrorLabel->hide();
+    ui->passwordErrorLabel->hide();
+
+}
+

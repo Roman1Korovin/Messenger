@@ -39,12 +39,12 @@ public:
     QVBoxLayout *verticalLayout_5;
     QLabel *label_2;
     QLineEdit *loginEdit;
-    QLabel *identityErrorLabel;
+    QLabel *identityLogErrorLabel;
     QFrame *frame_6;
     QVBoxLayout *verticalLayout_7;
     QLabel *label_4;
     QLineEdit *password2Edit;
-    QLabel *matchErrorLabel;
+    QLabel *matchPassErrorLabel;
     QFrame *frame_4;
     QVBoxLayout *verticalLayout_6;
     QLabel *label_5;
@@ -123,11 +123,11 @@ public:
 
         verticalLayout_5->addWidget(loginEdit);
 
-        identityErrorLabel = new QLabel(frame_5);
-        identityErrorLabel->setObjectName(QString::fromUtf8("identityErrorLabel"));
-        identityErrorLabel->setStyleSheet(QString::fromUtf8("color: rgb(255, 0, 0);"));
+        identityLogErrorLabel = new QLabel(frame_5);
+        identityLogErrorLabel->setObjectName(QString::fromUtf8("identityLogErrorLabel"));
+        identityLogErrorLabel->setStyleSheet(QString::fromUtf8("color: rgb(255, 0, 0);"));
 
-        verticalLayout_5->addWidget(identityErrorLabel);
+        verticalLayout_5->addWidget(identityLogErrorLabel);
 
 
         gridLayout->addWidget(frame_5, 1, 0, 1, 1, Qt::AlignTop);
@@ -149,11 +149,11 @@ public:
 
         verticalLayout_7->addWidget(password2Edit);
 
-        matchErrorLabel = new QLabel(frame_6);
-        matchErrorLabel->setObjectName(QString::fromUtf8("matchErrorLabel"));
-        matchErrorLabel->setStyleSheet(QString::fromUtf8("color: rgb(255, 0, 0);"));
+        matchPassErrorLabel = new QLabel(frame_6);
+        matchPassErrorLabel->setObjectName(QString::fromUtf8("matchPassErrorLabel"));
+        matchPassErrorLabel->setStyleSheet(QString::fromUtf8("color: rgb(255, 0, 0);"));
 
-        verticalLayout_7->addWidget(matchErrorLabel);
+        verticalLayout_7->addWidget(matchPassErrorLabel);
 
 
         gridLayout->addWidget(frame_6, 1, 1, 1, 1, Qt::AlignVCenter);
@@ -224,9 +224,9 @@ public:
         label->setText(QCoreApplication::translate("Registration", "\320\240\320\265\320\263\320\270\321\201\321\202\321\200\320\260\321\206\320\270\321\217", nullptr));
         label_3->setText(QCoreApplication::translate("Registration", "\320\222\320\262\320\265\320\264\320\270\321\202\320\265 \320\277\320\260\321\200\320\276\320\273\321\214", nullptr));
         label_2->setText(QCoreApplication::translate("Registration", "\320\222\320\262\320\265\320\264\320\270\321\202\320\265 \320\273\320\276\320\263\320\270\320\275", nullptr));
-        identityErrorLabel->setText(QCoreApplication::translate("Registration", "\320\237\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\214 \321\201 \321\202\320\260\320\272\320\270\320\274 \320\273\320\276\320\263\320\270\320\275\320\276\320\274 \321\203\320\266\320\265 \321\201\321\203\321\211\320\265\321\201\321\202\320\262\321\203\320\265\321\202", nullptr));
+        identityLogErrorLabel->setText(QCoreApplication::translate("Registration", "\320\237\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\214 \321\201 \321\202\320\260\320\272\320\270\320\274 \320\273\320\276\320\263\320\270\320\275\320\276\320\274 \321\203\320\266\320\265 \321\201\321\203\321\211\320\265\321\201\321\202\320\262\321\203\320\265\321\202", nullptr));
         label_4->setText(QCoreApplication::translate("Registration", "\320\237\320\276\320\264\321\202\320\262\320\265\321\200\320\264\320\270\321\202\320\265 \320\277\320\260\321\200\320\276\320\273\321\214", nullptr));
-        matchErrorLabel->setText(QCoreApplication::translate("Registration", "\320\237\320\260\321\200\320\276\320\273\320\270 \320\275\320\265 \321\201\320\276\320\262\320\277\320\260\320\264\320\260\321\216\321\202", nullptr));
+        matchPassErrorLabel->setText(QCoreApplication::translate("Registration", "\320\237\320\260\321\200\320\276\320\273\320\270 \320\275\320\265 \321\201\320\276\320\262\320\277\320\260\320\264\320\260\321\216\321\202", nullptr));
         label_5->setText(QCoreApplication::translate("Registration", "\320\222\320\262\320\265\320\264\320\270\321\202\320\265 \320\270\320\274\321\217 \320\277\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\217", nullptr));
         confirmButton->setText(QCoreApplication::translate("Registration", "\320\237\320\276\320\264\321\202\320\262\320\265\321\200\320\264\320\270\321\202\321\214", nullptr));
         returnButton->setText(QCoreApplication::translate("Registration", "\320\222\320\265\321\200\320\275\321\203\321\202\321\214\321\201\321\217 \320\272 \320\260\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\320\270", nullptr));

@@ -3,6 +3,7 @@
 
 #include <QTcpSocket>
 #include <QObject>
+#include <QVector>
 
 class NetworkManager : public QObject
 {
@@ -14,7 +15,7 @@ public:
 
 
 public slots:
-    void slotSendToServer(QString message);
+    void slotSendToServer(const QString& messageType, const QVariantList& parameters);
 
 
 private slots:
@@ -27,10 +28,13 @@ private:
     quint16 nextBlockSize;
 
 signals:
-    void messageReceived(const QString &timeStr, const QString &message);
-    void clientListUpdated(const QStringList clients);
+    void signalMessageReceived(const QString &timeStr, const QString &message);
+    void signalClientListUpdated(const QStringList clients);
     void signalErrorOccurred(const QString errorMessage);
-
+    void signalAuthComplete(const QVariantList userParams);
+    void signalAuthError(const QString errorType);
+    void signalRegSuccess();
+    void signalRegError();
 };
 
 #endif // NETWORKMANAGER_H

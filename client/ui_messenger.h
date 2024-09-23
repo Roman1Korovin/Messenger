@@ -52,7 +52,7 @@ public:
     QVBoxLayout *verticalLayout;
     QListWidget *listWidget;
     QPushButton *userButton;
-    QLineEdit *lineEdit_2;
+    QLineEdit *userSearchEdit;
     QFrame *line;
     QFrame *frame_4;
     QGridLayout *gridLayout_3;
@@ -185,15 +185,15 @@ public:
 
         gridLayout_2->addWidget(userButton, 0, 0, 1, 1);
 
-        lineEdit_2 = new QLineEdit(frame_3);
-        lineEdit_2->setObjectName(QString::fromUtf8("lineEdit_2"));
+        userSearchEdit = new QLineEdit(frame_3);
+        userSearchEdit->setObjectName(QString::fromUtf8("userSearchEdit"));
         QSizePolicy sizePolicy4(QSizePolicy::Minimum, QSizePolicy::Fixed);
         sizePolicy4.setHorizontalStretch(0);
         sizePolicy4.setVerticalStretch(0);
-        sizePolicy4.setHeightForWidth(lineEdit_2->sizePolicy().hasHeightForWidth());
-        lineEdit_2->setSizePolicy(sizePolicy4);
+        sizePolicy4.setHeightForWidth(userSearchEdit->sizePolicy().hasHeightForWidth());
+        userSearchEdit->setSizePolicy(sizePolicy4);
 
-        gridLayout_2->addWidget(lineEdit_2, 0, 1, 1, 1);
+        gridLayout_2->addWidget(userSearchEdit, 0, 1, 1, 1);
 
 
         horizontalLayout->addWidget(frame_3);
@@ -257,7 +257,7 @@ public:
 
         retranslateUi(Messenger);
 
-        stackedWidget->setCurrentIndex(0);
+        stackedWidget->setCurrentIndex(1);
 
 
         QMetaObject::connectSlotsByName(Messenger);
