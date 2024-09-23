@@ -7,8 +7,10 @@
 class User
 {
 public:
+    User(){}
     User(const QString &username, const QString &login, const QString &password)
         : username(username), login(login), password(password) {}
+
 
     QString getUsername() const { return username; }
     QString getLogin() const { return login; }

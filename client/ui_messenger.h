@@ -11,13 +11,14 @@
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
-#include <QtWidgets/QDialog>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QListWidget>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QStackedWidget>
@@ -28,15 +29,16 @@
 
 QT_BEGIN_NAMESPACE
 
-class Ui_messenger
+class Ui_Messenger
 {
 public:
+    QWidget *centralwidget;
     QHBoxLayout *horizontalLayout;
     QFrame *frame_3;
     QGridLayout *gridLayout_2;
-    QPushButton *userButton;
     QStackedWidget *stackedWidget;
     QWidget *page2;
+    QVBoxLayout *verticalLayout_2;
     QFrame *frame;
     QVBoxLayout *verticalLayout_3;
     QFrame *frame_2;
@@ -45,57 +47,56 @@ public:
     QLabel *loginLabel;
     QLabel *passwordLabel;
     QSpacerItem *verticalSpacer;
-    QPushButton *pushButton;
+    QPushButton *exitButton;
     QWidget *page1;
     QVBoxLayout *verticalLayout;
     QListWidget *listWidget;
+    QPushButton *userButton;
     QLineEdit *lineEdit_2;
     QFrame *line;
     QFrame *frame_4;
     QGridLayout *gridLayout_3;
-    QTextBrowser *textBrowser;
-    QPushButton *sendButton;
     MyTextEdit *textEdit;
+    QPushButton *sendButton;
+    QTextBrowser *textBrowser;
+    QMenuBar *menubar;
 
-    void setupUi(QDialog *messenger)
+    void setupUi(QMainWindow *Messenger)
     {
-        if (messenger->objectName().isEmpty())
-            messenger->setObjectName(QString::fromUtf8("messenger"));
-        messenger->resize(981, 435);
-        QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-        sizePolicy.setHorizontalStretch(0);
-        sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(messenger->sizePolicy().hasHeightForWidth());
-        messenger->setSizePolicy(sizePolicy);
-        messenger->setBaseSize(QSize(1000, 500));
-        horizontalLayout = new QHBoxLayout(messenger);
+        if (Messenger->objectName().isEmpty())
+            Messenger->setObjectName(QString::fromUtf8("Messenger"));
+        Messenger->resize(914, 600);
+        Messenger->setBaseSize(QSize(1000, 500));
+        centralwidget = new QWidget(Messenger);
+        centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
+        horizontalLayout = new QHBoxLayout(centralwidget);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         horizontalLayout->setContentsMargins(0, 0, 0, 0);
-        frame_3 = new QFrame(messenger);
+        frame_3 = new QFrame(centralwidget);
         frame_3->setObjectName(QString::fromUtf8("frame_3"));
-        QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        sizePolicy1.setHorizontalStretch(0);
-        sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(frame_3->sizePolicy().hasHeightForWidth());
-        frame_3->setSizePolicy(sizePolicy1);
+        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(frame_3->sizePolicy().hasHeightForWidth());
+        frame_3->setSizePolicy(sizePolicy);
         frame_3->setFrameShape(QFrame::StyledPanel);
         frame_3->setFrameShadow(QFrame::Raised);
         gridLayout_2 = new QGridLayout(frame_3);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
-        userButton = new QPushButton(frame_3);
-        userButton->setObjectName(QString::fromUtf8("userButton"));
-
-        gridLayout_2->addWidget(userButton, 0, 0, 1, 1);
-
         stackedWidget = new QStackedWidget(frame_3);
         stackedWidget->setObjectName(QString::fromUtf8("stackedWidget"));
+        stackedWidget->setBaseSize(QSize(1000, 500));
         page2 = new QWidget();
         page2->setObjectName(QString::fromUtf8("page2"));
+        verticalLayout_2 = new QVBoxLayout(page2);
+        verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
         frame = new QFrame(page2);
         frame->setObjectName(QString::fromUtf8("frame"));
-        frame->setGeometry(QRect(0, 0, 346, 391));
-        sizePolicy.setHeightForWidth(frame->sizePolicy().hasHeightForWidth());
-        frame->setSizePolicy(sizePolicy);
+        QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(frame->sizePolicy().hasHeightForWidth());
+        frame->setSizePolicy(sizePolicy1);
         frame->setFrameShape(QFrame::StyledPanel);
         frame->setFrameShadow(QFrame::Raised);
         verticalLayout_3 = new QVBoxLayout(frame);
@@ -157,10 +158,13 @@ public:
 
         verticalLayout_3->addItem(verticalSpacer);
 
-        pushButton = new QPushButton(frame);
-        pushButton->setObjectName(QString::fromUtf8("pushButton"));
+        exitButton = new QPushButton(frame);
+        exitButton->setObjectName(QString::fromUtf8("exitButton"));
 
-        verticalLayout_3->addWidget(pushButton);
+        verticalLayout_3->addWidget(exitButton);
+
+
+        verticalLayout_2->addWidget(frame);
 
         stackedWidget->addWidget(page2);
         page1 = new QWidget();
@@ -176,6 +180,11 @@ public:
 
         gridLayout_2->addWidget(stackedWidget, 1, 0, 1, 2);
 
+        userButton = new QPushButton(frame_3);
+        userButton->setObjectName(QString::fromUtf8("userButton"));
+
+        gridLayout_2->addWidget(userButton, 0, 0, 1, 1);
+
         lineEdit_2 = new QLineEdit(frame_3);
         lineEdit_2->setObjectName(QString::fromUtf8("lineEdit_2"));
         QSizePolicy sizePolicy4(QSizePolicy::Minimum, QSizePolicy::Fixed);
@@ -189,7 +198,7 @@ public:
 
         horizontalLayout->addWidget(frame_3);
 
-        line = new QFrame(messenger);
+        line = new QFrame(centralwidget);
         line->setObjectName(QString::fromUtf8("line"));
         QSizePolicy sizePolicy5(QSizePolicy::Fixed, QSizePolicy::Expanding);
         sizePolicy5.setHorizontalStretch(0);
@@ -201,29 +210,16 @@ public:
 
         horizontalLayout->addWidget(line);
 
-        frame_4 = new QFrame(messenger);
+        frame_4 = new QFrame(centralwidget);
         frame_4->setObjectName(QString::fromUtf8("frame_4"));
-        sizePolicy1.setHeightForWidth(frame_4->sizePolicy().hasHeightForWidth());
-        frame_4->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(frame_4->sizePolicy().hasHeightForWidth());
+        frame_4->setSizePolicy(sizePolicy);
         frame_4->setMinimumSize(QSize(0, 0));
         frame_4->setBaseSize(QSize(0, 0));
         frame_4->setFrameShape(QFrame::StyledPanel);
         frame_4->setFrameShadow(QFrame::Raised);
         gridLayout_3 = new QGridLayout(frame_4);
         gridLayout_3->setObjectName(QString::fromUtf8("gridLayout_3"));
-        textBrowser = new QTextBrowser(frame_4);
-        textBrowser->setObjectName(QString::fromUtf8("textBrowser"));
-        textBrowser->setMinimumSize(QSize(300, 0));
-
-        gridLayout_3->addWidget(textBrowser, 0, 1, 1, 2);
-
-        sendButton = new QPushButton(frame_4);
-        sendButton->setObjectName(QString::fromUtf8("sendButton"));
-        sendButton->setEnabled(false);
-        sendButton->setFocusPolicy(Qt::NoFocus);
-
-        gridLayout_3->addWidget(sendButton, 1, 2, 1, 1);
-
         textEdit = new MyTextEdit(frame_4);
         textEdit->setObjectName(QString::fromUtf8("textEdit"));
         QSizePolicy sizePolicy6(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -236,35 +232,52 @@ public:
 
         gridLayout_3->addWidget(textEdit, 1, 1, 1, 1);
 
+        sendButton = new QPushButton(frame_4);
+        sendButton->setObjectName(QString::fromUtf8("sendButton"));
+        sendButton->setEnabled(false);
+        sendButton->setFocusPolicy(Qt::NoFocus);
+
+        gridLayout_3->addWidget(sendButton, 1, 2, 1, 1);
+
+        textBrowser = new QTextBrowser(frame_4);
+        textBrowser->setObjectName(QString::fromUtf8("textBrowser"));
+        textBrowser->setMinimumSize(QSize(300, 0));
+
+        gridLayout_3->addWidget(textBrowser, 0, 1, 1, 2);
+
 
         horizontalLayout->addWidget(frame_4);
 
-        horizontalLayout->setStretch(0, 2);
         horizontalLayout->setStretch(2, 3);
+        Messenger->setCentralWidget(centralwidget);
+        menubar = new QMenuBar(Messenger);
+        menubar->setObjectName(QString::fromUtf8("menubar"));
+        menubar->setGeometry(QRect(0, 0, 914, 21));
+        Messenger->setMenuBar(menubar);
 
-        retranslateUi(messenger);
+        retranslateUi(Messenger);
 
-        stackedWidget->setCurrentIndex(1);
+        stackedWidget->setCurrentIndex(0);
 
 
-        QMetaObject::connectSlotsByName(messenger);
+        QMetaObject::connectSlotsByName(Messenger);
     } // setupUi
 
-    void retranslateUi(QDialog *messenger)
+    void retranslateUi(QMainWindow *Messenger)
     {
-        messenger->setWindowTitle(QCoreApplication::translate("messenger", "Dialog", nullptr));
-        userButton->setText(QCoreApplication::translate("messenger", "\320\237\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\214", nullptr));
-        usernameLabel->setText(QCoreApplication::translate("messenger", "\320\222\320\260\321\210\320\265 \320\270\320\274\321\217 \320\277\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\217: ", nullptr));
-        loginLabel->setText(QCoreApplication::translate("messenger", "\320\222\320\260\321\210 \320\273\320\276\320\263\320\270\320\275:", nullptr));
-        passwordLabel->setText(QCoreApplication::translate("messenger", "\320\222\320\260\321\210 \320\277\320\260\321\200\320\276\320\273\321\214:", nullptr));
-        pushButton->setText(QCoreApplication::translate("messenger", "\320\222\321\213\320\271\321\202\320\270 \320\270\320\267 \320\260\320\272\320\272\320\260\321\203\320\275\321\202\320\260", nullptr));
-        sendButton->setText(QCoreApplication::translate("messenger", "\320\236\321\202\320\277\321\200\320\260\320\262\320\270\321\202\321\214", nullptr));
+        Messenger->setWindowTitle(QCoreApplication::translate("Messenger", "MainWindow", nullptr));
+        usernameLabel->setText(QCoreApplication::translate("Messenger", "\320\222\320\260\321\210\320\265 \320\270\320\274\321\217 \320\277\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\217: ", nullptr));
+        loginLabel->setText(QCoreApplication::translate("Messenger", "\320\222\320\260\321\210 \320\273\320\276\320\263\320\270\320\275:", nullptr));
+        passwordLabel->setText(QCoreApplication::translate("Messenger", "\320\222\320\260\321\210 \320\277\320\260\321\200\320\276\320\273\321\214:", nullptr));
+        exitButton->setText(QCoreApplication::translate("Messenger", "\320\222\321\213\320\271\321\202\320\270 \320\270\320\267 \320\260\320\272\320\272\320\260\321\203\320\275\321\202\320\260", nullptr));
+        userButton->setText(QCoreApplication::translate("Messenger", "\320\237\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\214", nullptr));
+        sendButton->setText(QCoreApplication::translate("Messenger", "\320\236\321\202\320\277\321\200\320\260\320\262\320\270\321\202\321\214", nullptr));
     } // retranslateUi
 
 };
 
 namespace Ui {
-    class messenger: public Ui_messenger {};
+    class Messenger: public Ui_Messenger {};
 } // namespace Ui
 
 QT_END_NAMESPACE

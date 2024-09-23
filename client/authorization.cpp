@@ -3,19 +3,14 @@
 #include "QMessageBox"
 #include "registration.h"
 #include "messenger.h"
-#include "user.h"
 
-MainWindow::MainWindow(QWidget *parent)
+
+
+Authorization::Authorization(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
 
-
-    ui->setupUi(this);
-
-    //пряче метки ошибок авторизации при инициализации формы
-    ui->loginErrorLabel->hide();
-    ui->passwordErrorLabel->hide();
 
 
     db = QSqlDatabase::addDatabase("QSQLITE");
@@ -26,16 +21,23 @@ MainWindow::MainWindow(QWidget *parent)
     } else {
         qDebug() << "Соединение с базой данных успешно!";
     }
+
+    ui->setupUi(this);
+
+    //пряче метки ошибок авторизации при инициализации формы
+    ui->loginErrorLabel->hide();
+    ui->passwordErrorLabel->hide();
+
 }
 
-MainWindow::~MainWindow()
+Authorization::~Authorization()
 {
     delete ui; 
     db.close();
 }
 
 //кнопка входа, проверяющая правильность введенных данных
-void MainWindow::on_pushButton_clicked()
+void Authorization::on_pushButton_clicked()
 {
 
 
@@ -73,22 +75,19 @@ void MainWindow::on_pushButton_clicked()
 
 
 
-                User receivedUser(query.value("username").toString(),
+                receivedUser = new User(query.value("username").toString(),
                                   query.value("login").toString(),
                                   query.value("password").toString());
-                qDebug() << "Login: " << receivedUser.getLogin();
-                qDebug() << "Password: " << receivedUser.getPassword();
-                qDebug() << "Username: " << receivedUser.getUsername();
+                qDebug() << "Login: " << receivedUser->getLogin();
+                qDebug() << "Password: " << receivedUser->getPassword();
+                qDebug() << "Username: " << receivedUser->getUsername();
 
 
-                if (receivedUser.getPassword() == password) {
+                if (receivedUser->getPassword() == password) {
 
                     ui->passwordErrorLabel->hide();
 
-                    Messenger *w = new Messenger(receivedUser);
-                    w->setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-                    w->show();
-                    this->close();
+                    emit signalAuthComplete(*receivedUser);
 
 
 
@@ -107,7 +106,7 @@ void MainWindow::on_pushButton_clicked()
 }
 
 //кнопка для перехда на форму регитсрации
-void MainWindow::on_registerButton_clicked()
+void Authorization::on_registerButton_clicked()
 {
     Registration *w = new Registration(this, db);
     w->setModal(true);

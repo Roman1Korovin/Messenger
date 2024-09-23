@@ -76,7 +76,7 @@ void Server::slotReadyRead()
             in >> time >> str;
             qDebug()<<"Recieved:"<<str;
             nextBlockSize=0;
-            SendToClient(socket,str,"messasge");
+            SendToClient(socket,str,"message");
             break;
         }
     }
@@ -99,14 +99,14 @@ void Server::SendToClient(QTcpSocket *socket, const QString &str, const QString 
     out << quint16(0)<<messageType;
 
     if (messageType == "message") {
-            out << timeStr << str; // Для текстового сообщения
-        } else if (messageType == "clientList") {
+            out << timeStr << str; // Для текстового сообщения        
+    } else if (messageType == "clientList") {
             QStringList clientList;
             for (QTcpSocket *clientSocket : Sockets) {
                 clientList.append(QString::number(clientSocket->socketDescriptor()));
             }
             out << clientList; // Отправляем список клиентов
-        }
+    }
 
     out.device()->seek(0);
     out<<quint16(Data.size()-sizeof(quint16));

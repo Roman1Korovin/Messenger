@@ -2,59 +2,39 @@
 #include "ui_messenger.h"
 #include "textEdit.h"
 #include "QMessageBox"
-#include "authorization.h"
 
 
-Messenger::Messenger(const User& user, QWidget *parent ) :
-    QDialog(parent),
-    ui(new Ui::messenger),
-    nextBlockSize(0),
-    currentUser(user)
 
-{
+Messenger::Messenger(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::Messenger)
+
+//    currentUser(user)
+
+{   netManager = new NetworkManager();
+    netManager->connectToServer();
+
     ui->setupUi(this);
+    auth = new Authorization();
+    auth->show();
 
-    ui->userButton->setText(currentUser.getUsername());
+   connect(auth, &Authorization::signalAuthComplete,this, &Messenger::slotAuthComplete);
+
     ui->stackedWidget->setCurrentIndex(1);
-
-    ui->usernameLabel->setText(ui->usernameLabel->text() + "\n"+currentUser.getUsername());
-    ui->loginLabel->setText(ui->loginLabel->text() + "\n"+currentUser.getLogin());
-    ui->passwordLabel->setText(ui->passwordLabel->text() + "\n"+currentUser.getPassword());
 
 
 
     //замена элемента textEdit
-
     ui->sendButton->setEnabled(false);
     ui->textEdit->setFocus();
 
-    socket = new QTcpSocket(this);
-    socket->connectToHost("127.0.0.1", 2323);
 
-    // Подключение сигнала успешного подключения
-        connect(socket, &QTcpSocket::connected, this, []() {
-            qDebug() << "Connected to server";  // Сообщение об успешном подключении
-        });
-
-    connect(socket, &QTcpSocket::readyRead, this, &Messenger::slotReadyRead);
-
-    connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
-            this, [=](QAbstractSocket::SocketError socketError) {
-        qDebug() << "Socket error occurred:" << socketError;
-
-        if (socketError == QAbstractSocket::RemoteHostClosedError) {
-            QMessageBox::critical(this, "Ошибка", "Соединение с сервером потеряно.");
-            qDebug() << "Server closed the connection.";
-            QApplication::quit();
-        } else {
-            qDebug() << "Network error or client-side issue.";
-            QMessageBox::critical(this, "Ошибка", "Соединение с сервером потеряно.");
-            QApplication::quit();
-        }
+    connect(netManager, &NetworkManager::messageReceived, this, &Messenger::slotMessageReceived);
+    connect(netManager, &NetworkManager::clientListUpdated, this, &Messenger::slotClientListUpdated);
+    connect(netManager, &NetworkManager::signalErrorOccurred, this, &Messenger::slotErrorOccurred);
+    connect(this, &Messenger::signalSendToServer, netManager, &NetworkManager::slotSendToServer);
 
 
-
-    });
 
     connect(ui->textEdit,&MyTextEdit::enterPressed, this, &Messenger::on_sendEnter_pressed);
 }
@@ -64,104 +44,58 @@ Messenger::~Messenger()
     delete ui;
 }
 
-
-void Messenger::SendToServer(const QString &str)
+void Messenger::slotErrorOccurred(QString errorMessage)
 {
-    QByteArray data;
-    QDataStream out(&data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_14);
-    out << quint16(0) << QTime::currentTime()<< str;
-    out.device()->seek(0);
-    out<<quint16(data.size()-sizeof(quint16));
-
-    qint64 bytesWritten = socket->write(data);
-    if (bytesWritten == -1) {
-        qDebug() << "Failed to write data to server";
-    } else {
-        qDebug() << "Sent" << bytesWritten << "bytes to server";
-    }
-
-    ui->textEdit->clear();
+    qDebug() <<"fsafs";
+    QMessageBox::critical(this, "Ошибка", errorMessage);
+    QApplication::exit();
 }
 
-void Messenger::slotReadyRead()
+void Messenger::slotAuthComplete(User user)
 {
-    QDataStream in(socket);
-    in.setVersion(QDataStream::Qt_5_14);
 
-    if (in.status() == QDataStream::Ok)
-    {
-        for (;;)
-        {
-            if(nextBlockSize==0)
-            {
-                if(socket->bytesAvailable()<2)
-                {
-                    break;
-                }
-                in>>nextBlockSize;
-            }
-            if(socket->bytesAvailable()<nextBlockSize)
-            {
-                break;
-            }
-            // Считываем тип сообщения
-                        QString messageType;
-                        in >> messageType;
+    currentUser = new User(user);  // Сохраняем информацию о текущем пользователе
 
-                        if (messageType == "message") {
-                            // Обработка текстовых сообщений
-                            QString timeStr, str;
-                            in >> timeStr >> str;
-                            ui->textBrowser->append(timeStr + "  " + str);
+    // Обновляем элементы интерфейса
+    ui->userButton->setText(currentUser->getUsername());
+    ui->usernameLabel->setText(ui->usernameLabel->text() + "\n" + currentUser->getUsername());
+    ui->loginLabel->setText(ui->loginLabel->text() + "\n" + currentUser->getLogin());
+    ui->passwordLabel->setText(ui->passwordLabel->text() + "\n" + currentUser->getPassword());
 
-                        } else if (messageType == "clientList") {
-                            processServerMessage(in);
-                        }
-
-                        nextBlockSize = 0;
-                        break;
-                    }
-                }
-                else
-                {
-                    ui->textBrowser->append("DataStream error");
-                }
-            }
-
-void Messenger::processServerMessage(QDataStream &in) {
-
-
-        QStringList clientList;
-        in >> clientList;
-
-         qDebug() << QString::number(socket->socketDescriptor());
-
-        // Удаляем текущего клиента из списка
-        clientList.removeAll(QString::number(socket->socketDescriptor()));
+    auth->close();
+    this->show();
+}
 
 
 
-        // Обновляем listView
 
-        ui->listWidget->clear();
-        ui->listWidget->addItems(clientList);
 
+void Messenger::slotMessageReceived(const QString &timeStr, const QString &message)
+{
+    ui->textBrowser->append(timeStr + "  " + message);
+}
+
+void Messenger::slotClientListUpdated(const QStringList &clients)
+{
+    ui->listWidget->clear();
+    ui->listWidget->addItems(clients);
 
 }
 
 void Messenger::on_sendButton_clicked()
 {
 
-      SendToServer(ui->textEdit->toPlainText());
+      emit signalSendToServer(ui->textEdit->toPlainText());
       ui->textEdit->setFocus();
+      ui->textEdit->clear();
 }
 
 void Messenger::on_sendEnter_pressed()
 {
     if(ui->textEdit->hasFocus())
     {
-        SendToServer(ui->textEdit->toPlainText());
+       emit signalSendToServer(ui->textEdit->toPlainText());
+        ui->textEdit->clear();
     }
 }
 
@@ -188,10 +122,10 @@ void Messenger::on_userButton_clicked()
         ui->stackedWidget->setCurrentIndex(0);
 }
 
-void Messenger::on_pushButton_clicked()
+void Messenger::on_exitButton_clicked()
 {
-    MainWindow *w = new MainWindow();
+    Authorization *w = new Authorization();
     w->show();
     this->close();
-
 }
+
