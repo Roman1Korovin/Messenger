@@ -37,7 +37,7 @@ signals:
 
 public slots:
     void slotMessageReceived(const QString &timeStr, const QString &message);
-    void slotClientListUpdated(const QStringList &clients);
+    void slotClientListUpdated(const QVariantList &clients);
     void slotAuthComplete(const QVariantList userParams);
     void slotErrorOccurred(QString errorMessage);
 

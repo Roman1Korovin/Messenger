@@ -75,25 +75,30 @@ void Messenger::slotMessageReceived(const QString &timeStr, const QString &messa
     ui->textBrowser->append(timeStr + "  " + message);
 }
 
-void Messenger::slotClientListUpdated(const QStringList &clients)
+void Messenger::slotClientListUpdated(const QVariantList &clients)
 {
     ui->listWidget->clear();
-    ui->listWidget->addItems(clients);
+
+    for (const QVariant &client : clients) {
+           QVariantMap clientMap = client.toMap();  // Преобразуем элемент списка в QVariantMap
+           QString username = clientMap.value("username").toString();  // Извлекаем username
+           ui->listWidget->addItem(username);  // Добавляем username в listWidget
+       }
 
 }
 
 void Messenger::on_sendButton_clicked()
 {
-    QVariantList message;
-    message<<ui->textEdit->toPlainText();
-    emit signalSendToServer("message",  message);
+    QVariantList messageParams;
+    messageParams<<ui->textEdit->toPlainText();
+    emit signalSendToServer("message",  messageParams);
       ui->textEdit->setFocus();
       ui->textEdit->clear();
 }
 
 void Messenger::on_sendEnter_pressed()
 {
-    if(ui->textEdit->hasFocus())
+    if(ui->textEdit->hasFocus() && !ui->textEdit->toPlainText().trimmed().isEmpty())
     {
         QVariantList messageParams;
         messageParams<<ui->textEdit->toPlainText();
@@ -105,7 +110,7 @@ void Messenger::on_sendEnter_pressed()
 
 void Messenger::on_textEdit_textChanged()
 {
-    if(ui->textEdit->toPlainText().isEmpty())
+    if(ui->textEdit->toPlainText().trimmed().isEmpty())
     {
         ui->sendButton->setEnabled(false);
     }

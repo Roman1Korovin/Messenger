@@ -1,4 +1,5 @@
 #include "server.h"
+#include "QTimer"
 
 Server::Server()
 {
@@ -27,6 +28,8 @@ Server::Server()
 
 }
 
+
+
 Server::~Server()
 {
     db.close();
@@ -41,21 +44,13 @@ void Server::incomingConnection(qintptr socketDescriptor)
     connect(socket, &QTcpSocket::disconnected, this, [this, socket, socketDescriptor]() {
         qDebug() << "Client disconnected" << socketDescriptor;
         Sockets.removeOne(socket);
+        userMap.remove(socket);
         socket->deleteLater();
 
-        // После отключения клиента обновляем список
-        for (QTcpSocket *clientSocket : Sockets) {
-            SendToClient(clientSocket, "clientList",QVariantList());
-        }
     });
 
     Sockets.push_back(socket);
     qDebug() << "Client connected:" << socketDescriptor;
-
-    // Отправляем текущий список клиентов всем подключенным клиентам
-    for (QTcpSocket *clientSocket : Sockets) {
-        SendToClient(clientSocket, "clientList", QVariantList());
-    }
 }
 
 void Server::slotReadyRead()
@@ -96,6 +91,7 @@ void Server::slotReadyRead()
         in >> messageType;
 
         if (messageType == "message") {
+
             QString str;
             QTime time;
             in >> time >> str;
@@ -112,8 +108,8 @@ void Server::slotReadyRead()
             QString login, password;
 
 
-            in >> login;
-            in >>password;
+            in >> login >> password;
+
 
             QSqlQuery query;
             query.prepare("SELECT username,login, password FROM users WHERE login = :login");
@@ -136,6 +132,23 @@ void Server::slotReadyRead()
                         userParams<<receivedUsername<<receivedLogin<<receivedPassword;
 
                         SendToClient(socket, "authSuccess",userParams);
+
+                        isSendingAuthSuccess = true;  // Устанавливаем флаг
+
+                        connect(socket, &QTcpSocket::bytesWritten, this, [this, socket, receivedUsername, receivedLogin](qint64 bytes) {
+                               // Если отправка сообщения об успешной авторизации завершена
+                            qDebug()<<"11";
+                               if (isSendingAuthSuccess) {
+                                   // Теперь обновляем список клиентов
+                                   updateClientList(socket, receivedUsername, receivedLogin);
+                                   isSendingAuthSuccess = false;  // Сбрасываем флаг
+                               }
+                           });
+
+
+
+
+
                     } else {
                         // Неправильный пароль
                         QVariantList errorParams;
@@ -217,23 +230,25 @@ void Server::slotReadyRead()
     out.setVersion(QDataStream::Qt_5_14);
 
     // Форматирование времени без секунд
-    QTime time = QTime::currentTime();
-    QString timeStr = time.toString("hh:mm");
 
     out << quint16(0)<<messageType;
 
     if (messageType == "message") {
+
+        QTime time = QTime::currentTime();
+        QString timeStr = time.toString("hh:mm");
 
         QString str = parameters.value(0).toString();
 
             out << timeStr << str; // Для текстового сообщения        
     }
     else if (messageType == "clientList") {
-            QStringList clientList;
-            for (QTcpSocket *clientSocket : Sockets) {
-                clientList.append(QString::number(clientSocket->socketDescriptor()));
+
+        for (const QVariant &param : parameters) {
+
+                out << param;
             }
-            out << clientList; // Отправляем список клиентов
+        qDebug()<<parameters;
     }
     else if (messageType == "authSuccess")
     {
@@ -257,6 +272,7 @@ void Server::slotReadyRead()
     }
     else if(messageType == "regSuccess")
     {
+        qDebug() << "Registration success";
     }
     else if(messageType == "regError")
     {
@@ -272,5 +288,25 @@ void Server::slotReadyRead()
     out<<quint16(Data.size()-sizeof(quint16));
     socket->write(Data);
 }
+
+ void Server::updateClientList(QTcpSocket *socket, QString username, QString login)
+ {
+     userMap.insert(socket, qMakePair(username, login));
+
+     QVariantList userMapParams;
+
+     // Собираем данные для отправки
+         for (auto it = userMap.constBegin(); it != userMap.constEnd(); ++it) {
+             QVariantMap userInfo;
+             userInfo["username"] = it.value().first; // Имя
+             userInfo["login"] = it.value().second;   // Логин
+             userMapParams << userInfo;
+         }
+
+     // Отправляем список клиентских имен всем подключенным клиентам
+     for (QTcpSocket *clientSocket : Sockets) {
+         SendToClient(clientSocket, "clientList", userMapParams);
+     }
+ }
 
 

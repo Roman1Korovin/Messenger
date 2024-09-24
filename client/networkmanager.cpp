@@ -101,6 +101,7 @@ void NetworkManager::slotSendToServer(const QString& messageType, const QVariant
 void NetworkManager::slotReadyRead()
 {
 
+
     QDataStream in(socket);
     in.setVersion(QDataStream::Qt_5_14);
 
@@ -132,21 +133,34 @@ void NetworkManager::slotReadyRead()
         if (messageType == "message")
         {
             QString timeStr, str;
-            qDebug()<< "111";
             in >> timeStr >> str;
             emit signalMessageReceived(timeStr, str);
         }
         else if (messageType == "clientList")
         {
-            QStringList clientList;
-            in >> clientList;
 
-            qDebug() << "Cl:" <<clientList;
+              QVariantList users;
 
-            emit signalClientListUpdated(clientList);
+
+            while (!in.atEnd()) {
+
+                QVariant user;
+
+                in >> user;  // Чтение следующего QVariantMap объекта
+
+                users.append(user);
+            }
+
+
+            emit signalClientListUpdated(users);
+
+
+            // После того как все данные считаны, отправляем их через сигнал
+
         }
         else if (messageType == "authSuccess")
         {
+            qDebug()<<"authSuccess";
             QVariantList userParams;
             QString username, login, password;
 

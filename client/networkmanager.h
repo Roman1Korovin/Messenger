@@ -29,7 +29,7 @@ private:
 
 signals:
     void signalMessageReceived(const QString &timeStr, const QString &message);
-    void signalClientListUpdated(const QStringList clients);
+    void signalClientListUpdated(const QVariantList clients);
     void signalErrorOccurred(const QString errorMessage);
     void signalAuthComplete(const QVariantList userParams);
     void signalAuthError(const QString errorType);

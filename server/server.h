@@ -24,6 +24,12 @@ private:
     quint16 nextBlockSize;
     QSqlDatabase db;
 
+    QMap<QTcpSocket *, QPair<QString, QString>> userMap;
+
+    bool isSendingAuthSuccess = false;
+
+    void updateClientList(QTcpSocket *socket, QString username, QString login);
+
 public slots:
     void incomingConnection(qintptr socketDescriptor) override;
     void slotReadyRead();
