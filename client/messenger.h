@@ -28,6 +28,8 @@ private:
     NetworkManager* netManager;
     User* currentUser;
 
+    QVariantList clients;
+
     void reset();
 
 signals:
@@ -37,7 +39,7 @@ signals:
 
 public slots:
     void slotMessageReceived(const QString &timeStr, const QString &message);
-    void slotClientListUpdated(const QVariantList &clients);
+    void slotClientListUpdated(const QVariantList &receivedClients);
     void slotAuthComplete(const QVariantList userParams);
     void slotErrorOccurred(QString errorMessage);
 
@@ -48,6 +50,7 @@ private slots:
     void on_textEdit_textChanged();
     void on_userButton_clicked();
     void on_exitButton_clicked();
+    void slotItemSelectionChanged();
 };
 
 #endif // MESSENGER_H

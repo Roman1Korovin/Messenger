@@ -28,7 +28,7 @@ private:
 
     bool isSendingAuthSuccess = false;
 
-    void updateClientList(QTcpSocket *socket, QString username, QString login);
+    void updateClientList();
 
 public slots:
     void incomingConnection(qintptr socketDescriptor) override;

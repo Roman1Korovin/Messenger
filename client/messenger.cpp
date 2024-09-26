@@ -22,6 +22,8 @@ Messenger::Messenger(QWidget *parent) :
 
     ui->stackedWidget->setCurrentIndex(1);
 
+    ui->textEdit->setReadOnly(true);
+
 
 
     //замена элемента textEdit
@@ -35,7 +37,10 @@ Messenger::Messenger(QWidget *parent) :
     connect(netManager, &NetworkManager::signalClientListUpdated, this, &Messenger::slotClientListUpdated);
     connect(netManager, &NetworkManager::signalErrorOccurred, this, &Messenger::slotErrorOccurred);
     connect(this, &Messenger::signalSendToServer, netManager, &NetworkManager::slotSendToServer);
+
+
     connect(ui->textEdit,&MyTextEdit::enterPressed, this, &Messenger::on_sendEnter_pressed);
+    connect(ui->listWidget, &QListWidget::itemSelectionChanged, this, &Messenger::slotItemSelectionChanged);
 }
 
 Messenger::~Messenger()
@@ -75,27 +80,51 @@ void Messenger::slotMessageReceived(const QString &timeStr, const QString &messa
     ui->textBrowser->append(timeStr + "  " + message);
 }
 
-void Messenger::slotClientListUpdated(const QVariantList &clients)
+void Messenger::slotClientListUpdated(const QVariantList &receivedClients)
 {
     ui->listWidget->clear();
+    clients = receivedClients;
+
+    qDebug() << clients;
 
     for (const QVariant &client : clients) {
-           QVariantMap clientMap = client.toMap();  // Преобразуем элемент списка в QVariantMap
-           QString username = clientMap.value("username").toString();  // Извлекаем username
-           ui->listWidget->addItem(username);  // Добавляем username в listWidget
-       }
+        QVariantMap clientMap = client.toMap();  // Преобразуем элемент списка в QVariantMap
+        QString username = clientMap.value("username").toString();  // Извлекаем username
 
+        QListWidgetItem *item = new QListWidgetItem(username);  // Создаем новый элемент
+        item->setData(Qt::UserRole, clientMap);  // Сохраняем QVariantMap в качестве пользовательских данных
+        ui->listWidget->addItem(item);  // Добавляем элемент в listWidget
+    }
 }
+// Реализация слота
+void Messenger::slotItemSelectionChanged() {
+    if (ui->listWidget->selectedItems().count() > 0) {
+        ui->textEdit->setReadOnly(false);  // Если есть выбранные элементы, делаем QTextEdit доступным
+    } else {
+        ui->textEdit->setReadOnly(true);   // Если нет выбранных элементов, делаем его недоступным
+    }
+}
+
 
 void Messenger::on_sendButton_clicked()
 {
     QVariantList messageParams;
-    messageParams<<ui->textEdit->toPlainText();
-    emit signalSendToServer("message",  messageParams);
-      ui->textEdit->setFocus();
-      ui->textEdit->clear();
-}
 
+    QListWidgetItem *selectedItem = ui->listWidget->currentItem();
+    if (selectedItem) {
+        QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();  // Получаем QVariantMap из пользовательских данных
+
+        // Добавляем нужные параметры в messageParams
+        messageParams << clientMap.value("login").toString();     // Логин
+        // Добавьте сюда другие поля, если необходимо
+
+        messageParams << ui->textEdit->toPlainText();  // Добавляем текст из QTextEdit
+        emit signalSendToServer("message", messageParams);  // Отправляем сообщение на сервер
+    }
+
+    ui->textEdit->setFocus();
+    ui->textEdit->clear();
+}
 void Messenger::on_sendEnter_pressed()
 {
     if(ui->textEdit->hasFocus() && !ui->textEdit->toPlainText().trimmed().isEmpty())

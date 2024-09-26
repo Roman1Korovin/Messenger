@@ -36,8 +36,11 @@ void NetworkManager::slotSendToServer(const QString& messageType, const QVariant
 
         if (messageType == "message") {
 
-            QString message = parameters.value(0).toString();
-            out << QTime::currentTime() << message;  // Отправка текстового сообщения с временем
+            QString login = parameters.value(0).toString();
+            QString messageStr = parameters.value(1).toString();
+
+            qDebug() <<"Log: "<< login << "msg: "<< messageStr;
+            out << login << messageStr;  // Отправка текстового сообщения с временем
            }
            // Возможны и другие типы сообщений
            else if (messageType == "login") {

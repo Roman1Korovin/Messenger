@@ -222,6 +222,7 @@ public:
         gridLayout_3->setObjectName(QString::fromUtf8("gridLayout_3"));
         textEdit = new MyTextEdit(frame_4);
         textEdit->setObjectName(QString::fromUtf8("textEdit"));
+        textEdit->setEnabled(true);
         QSizePolicy sizePolicy6(QSizePolicy::Expanding, QSizePolicy::Fixed);
         sizePolicy6.setHorizontalStretch(0);
         sizePolicy6.setVerticalStretch(0);
