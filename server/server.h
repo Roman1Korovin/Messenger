@@ -30,6 +30,10 @@ private:
 
     void updateClientList();
 
+    void messageProccessing(QDataStream& in);
+    void loginProccessing(QDataStream &in, QTcpSocket *socket);
+    void registerProccessing(QDataStream &in, QTcpSocket *socket);
+
 public slots:
     void incomingConnection(qintptr socketDescriptor) override;
     void slotReadyRead();

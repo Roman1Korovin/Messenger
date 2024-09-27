@@ -107,6 +107,4 @@ void Authorization::reset()
     ui->passwordEdit->setStyleSheet("");
     ui->loginErrorLabel->hide();
     ui->passwordErrorLabel->hide();
-
 }
-

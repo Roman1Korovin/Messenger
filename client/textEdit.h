@@ -12,6 +12,7 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *e) override;
+
 signals:
     void enterPressed();
 };

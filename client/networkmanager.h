@@ -13,19 +13,8 @@ public:
 
     void connectToServer();
 
-
 public slots:
     void slotSendToServer(const QString& messageType, const QVariantList& parameters);
-
-
-private slots:
-    void slotReadyRead();
-    void slotErrorOccurred(QAbstractSocket::SocketError socketError);
-
-
-private:
-    QTcpSocket *socket;
-    quint16 nextBlockSize;
 
 signals:
     void signalMessageReceived(const QString &senderLogin, const QString &timeStr, const QString &message, const bool &isMyselfMessage);
@@ -35,6 +24,14 @@ signals:
     void signalAuthError(const QString errorType);
     void signalRegSuccess();
     void signalRegError();
+
+private:
+    QTcpSocket *socket;
+    quint16 nextBlockSize;
+
+private slots:
+    void slotReadyRead();
+    void slotErrorOccurred(QAbstractSocket::SocketError socketError);
 };
 
 #endif // NETWORKMANAGER_H

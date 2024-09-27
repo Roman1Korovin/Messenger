@@ -22,17 +22,15 @@ public slots:
     void slotRegSuccess();
     void slotRegError();
 
+signals:
+    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
+
 private slots:
     void on_confirmButton_clicked();
     void on_returnButton_clicked();
 
-
 private:
     Ui::Registration *ui;
-
-signals:
-    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
-
 };
 
 #endif // REGISTRATION_H

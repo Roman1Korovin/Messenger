@@ -24,57 +24,6 @@ void NetworkManager::connectToServer()
 
 }
 
-void NetworkManager::slotSendToServer(const QString& messageType, const QVariantList& parameters)
-{
-
-    QByteArray data;
-    QDataStream out(&data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_14);
-
-
-    out << quint16(0) << messageType;
-
-    if (messageType == "message") {
-
-        QString senderLogin = parameters.value(0).toString();
-        QString recipientLogin = parameters.value(1).toString();
-        QString messageStr = parameters.value(2).toString();
-
-
-        out << senderLogin <<recipientLogin << messageStr;
-    }
-
-    else if (messageType == "login") {
-        QString login = parameters.value(0).toString();
-        QString password = parameters.value(1).toString();
-        out << login << password;
-    }
-    else if(messageType == "register")
-    {
-        QString username = parameters.value(0).toString();
-        QString login = parameters.value(1).toString();
-        QString password = parameters.value(2).toString();
-        out << username<<login<<password;
-    }
-
-    else {
-        qDebug() << "Unknown messageType: " << messageType;
-        return;
-    }
-
-    out.device()->seek(0);
-    out<<quint16(data.size()-sizeof(quint16));
-
-    qint64 bytesWritten = socket->write(data);
-    if (bytesWritten == -1) {
-        qDebug() << "Failed to write data to server";
-    } else {
-        qDebug() << "Sent" << bytesWritten << "bytes to server";
-    }
-}
-
-
-
 void NetworkManager::slotErrorOccurred(QAbstractSocket::SocketError socketError) {
     qDebug() << "Socket error occurred:" << socketError;
 
@@ -97,15 +46,16 @@ void NetworkManager::slotErrorOccurred(QAbstractSocket::SocketError socketError)
         errorMessage = "Произошла ошибка подключения к серверу.";
         break;
     }
+
     qDebug() <<errorMessage;
+
     emit signalErrorOccurred(errorMessage);
 
 }
 
+
 void NetworkManager::slotReadyRead()
 {
-
-
     QDataStream in(socket);
     in.setVersion(QDataStream::Qt_5_14);
 
@@ -125,7 +75,6 @@ void NetworkManager::slotReadyRead()
             in >> nextBlockSize;
         }
         if (socket->bytesAvailable() < nextBlockSize)
-
         {
             break;
         }
@@ -136,10 +85,14 @@ void NetworkManager::slotReadyRead()
 
         if (messageType == "message")
         {
-            QString senderLogin, timeStr, messageStr;
-            bool isMyselfMessage;
+            QVariant senderLoginVariant, timeStrVariant, messageStrVariant, isMyselfMessageVariant;
 
-            in >>senderLogin >> timeStr >> messageStr >> isMyselfMessage;
+            in >> senderLoginVariant >> timeStrVariant >> messageStrVariant >> isMyselfMessageVariant;
+
+            QString senderLogin = senderLoginVariant.toString();
+            QString timeStr = timeStrVariant.toString();
+            QString messageStr = messageStrVariant.toString();
+            bool isMyselfMessage = isMyselfMessageVariant.toBool();
 
             emit signalMessageReceived(senderLogin,  timeStr,messageStr, isMyselfMessage);
         }
@@ -147,7 +100,6 @@ void NetworkManager::slotReadyRead()
         {
 
             QVariantList users;
-
 
             while (!in.atEnd()) {
 
@@ -158,52 +110,72 @@ void NetworkManager::slotReadyRead()
                 users.append(user);
             }
 
-
             emit signalClientListUpdated(users);
-
-
-
         }
         else if (messageType == "authSuccess")
         {
-            qDebug()<<"authSuccess";
             QVariantList userParams;
-            QString username, login, password;
 
-            in >> username >> login >> password;
+            QVariant usernameVariant, loginVariant, passwordVariant;
+            in >> usernameVariant >> loginVariant >> passwordVariant;
 
-            userParams << username << login << password;
+            userParams << usernameVariant << loginVariant << passwordVariant;
 
             emit signalAuthComplete(userParams);
         }
+
         else if (messageType == "authError")
         {
-            QString typeError;
+            QVariant typeErrorVariant;
 
-            in >> typeError;
+            in >> typeErrorVariant;
 
-            qDebug()<< typeError;
+            QString typeError = typeErrorVariant.toString();
 
             emit signalAuthError(typeError);
         }
         else if (messageType == "regSuccess")
         {
-
             emit signalRegSuccess();
-
         }
         else if (messageType == "regError")
         {
-
             emit signalRegError();
-
-
         }
-
-        else {
+        else
+        {
             qDebug() << "Unknown messageType received:" << messageType;
         }
         nextBlockSize = 0;
         break;
+    }
+}
+
+
+void NetworkManager::slotSendToServer(const QString& messageType, const QVariantList& parameters)
+{
+
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_14);
+
+
+    out << quint16(0) << messageType;
+
+    for (const QVariant &param : parameters) {
+
+        out << param;
+    }
+
+    out.device()->seek(0);
+    out<<quint16(data.size()-sizeof(quint16));
+
+    qint64 bytesWritten = socket->write(data);
+    if (bytesWritten == -1)
+    {
+        qDebug() << "Failed to write data to server";
+    } else
+    {
+        qDebug() << "Sent" << bytesWritten << "bytes to server";
     }
 }

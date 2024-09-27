@@ -41,11 +41,12 @@ void Server::incomingConnection(qintptr socketDescriptor)
     socket->setSocketDescriptor(socketDescriptor);
 
     connect(socket, &QTcpSocket::readyRead, this, &Server::slotReadyRead);
-    connect(socket, &QTcpSocket::disconnected, this, [this, socket, socketDescriptor]() {
-        qDebug() << "Client disconnected" << socketDescriptor;
+    connect(socket, &QTcpSocket::disconnected, this, [this, socket, socketDescriptor]()
+    {
         Sockets.removeOne(socket);
         userMap.remove(socket);
 
+        qDebug() << "Client disconnected" << socketDescriptor;
 
         updateClientList();
 
@@ -54,6 +55,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
     });
 
     Sockets.push_back(socket);
+
     qDebug() << "Client connected:" << socketDescriptor;
 }
 
@@ -69,11 +71,11 @@ void Server::slotReadyRead()
     QDataStream in(socket);
     in.setVersion(QDataStream::Qt_5_14);
 
-    if (in.status() != QDataStream::Ok) {
+    if (in.status() != QDataStream::Ok)
+    {
         qDebug() << "DataStream error";
         return;
     }
-
 
     for (;;)
     {
@@ -91,186 +93,32 @@ void Server::slotReadyRead()
             break;
         }
 
+
         QString messageType;
         in >> messageType;
 
-        if (messageType == "message") {
+        if (messageType == "message")
+        {
+            messageProccessing(in);
 
-            QString senderLogin,recipientLogin, messageStr;
-
-
-            in >> senderLogin>> recipientLogin>>  messageStr;
-
-            QString timeStr;
-            timeStr = QTime::currentTime().toString("hh:mm");
-
-
-
-
-
-
-
-
-            bool isMyselfMessage;
-
-            for (auto it = userMap.constBegin(); it != userMap.constEnd(); ++it) {
-                // Проверяем, совпадает ли логин
-
-                if (it.value().second == recipientLogin) {  // Проверяем логин и исключаем отправителя
-
-                    QVariantList messageParams;
-
-                    messageParams << senderLogin;
-                    messageParams << timeStr;
-                    messageParams <<messageStr;
-                    isMyselfMessage= false;
-                    messageParams <<isMyselfMessage;
-
-                    SendToClient(it.key(), "message", messageParams);
-
-
-                }
-                if(it.value().second == senderLogin )
-                {
-
-                    QVariantList messageParams;
-
-                    messageParams << recipientLogin;
-                    messageParams << timeStr;
-                    messageParams <<messageStr;
-                    isMyselfMessage= true;
-                    messageParams <<isMyselfMessage;
-
-                    SendToClient(it.key(), "message", messageParams);
-
-
-                }
-
-
-            }
-
-
-        } else if (messageType == "login") {
-
-            QString login, password;
-
-
-            in >> login >> password;
-
-
-            QSqlQuery query;
-            query.prepare("SELECT username,login, password FROM users WHERE login = :login");
-            query.bindValue(":login", login);
-
-
-            if (query.exec())
-            {
-                if(query.next())
-                {
-
-                    QString receivedUsername = query.value("username").toString();
-                    QString receivedLogin = query.value("login").toString();
-                    QString receivedPassword = query.value("password").toString();
-
-                    if (receivedPassword == password) {
-
-
-                        QVariantList userParams;
-                        userParams<<receivedUsername<<receivedLogin<<receivedPassword;
-
-                        SendToClient(socket, "authSuccess",userParams);
-
-                        isSendingAuthSuccess = true;
-
-                        connect(socket, &QTcpSocket::bytesWritten, this, [this, socket, receivedUsername, receivedLogin](qint64 bytes) {
-
-                            if (isSendingAuthSuccess) {
-
-                                userMap.insert(socket, qMakePair(receivedUsername, receivedLogin));
-                                updateClientList();
-                                isSendingAuthSuccess = false;
-                            }
-                        });
-
-
-
-
-
-                    } else {
-
-                        QVariantList errorParams;
-                        errorParams << "invalidPass";
-
-                        SendToClient(socket, "authError", errorParams);
-                    }
-                } else {
-
-                    QVariantList errorParams;
-                    errorParams << "logNotFound";
-                    SendToClient(socket, "authError", errorParams );
-                }
-            } else
-            {
-                qDebug() << "Request execution error:" << query.lastError().text();
-            }
-
+        } else if (messageType == "login")
+        {
+            loginProccessing(in, socket);
         }
         else if(messageType == "register")
         {
-            QString username,login,password;
-
-            in >> username >> login >>password;
-
-            QSqlQuery query;
-
-            query.prepare("SELECT login FROM users WHERE login = :login");
-            query.bindValue(":login", login);
-
-            if(query.exec())
-            {
-                if(!query.next()) // Пользователь с таким логином не найден
-                {
-
-                    query.prepare("INSERT INTO users (username, login, password) VALUES (:username, :login, :password)");
-                    query.bindValue(":username", username);
-                    query.bindValue(":login", login);
-                    query.bindValue(":password", password);
-
-                    if (!query.exec()) {
-                        qDebug() << "Data insertion error" << query.lastError().text();
-                    } else {
-                        QVariantList completeRegParams;
-                        completeRegParams << "registerSuccess";
-                        SendToClient(socket, "regSuccess",  completeRegParams);
-                    }
-                }
-                else
-                {
-
-
-                    QVariantList rejectRegParams;
-                    rejectRegParams << "uniqueError";
-
-
-                    SendToClient(socket, "regError", rejectRegParams);
-                }
-
-            }
-            else{
-                qDebug() << "Request execution error:" << query.lastError().text();
-            }
+            registerProccessing(in, socket);
         }
         else {
             qDebug() << "Unknown messageType received:" << messageType;
         }
-
 
         nextBlockSize=0;
     }
 
 }
 
-void Server::SendToClient(QTcpSocket *socket, const QString& messageType, const QVariantList& parameters)
+void Server::SendToClient( QTcpSocket* socket, const QString& messageType, const QVariantList& parameters)
 {
     QByteArray Data;
     QDataStream out(&Data, QIODevice::WriteOnly);
@@ -280,61 +128,9 @@ void Server::SendToClient(QTcpSocket *socket, const QString& messageType, const 
 
     out << quint16(0)<<messageType;
 
-    if (messageType == "message") {
-
-        QString senderLogin, timeStr, messageStr;
-
-        bool isMyselfMessage;
-
-        senderLogin = parameters.value(0).toString();
-        timeStr = parameters.value(1).toString();
-        messageStr = parameters.value(2).toString();
-        isMyselfMessage = parameters.value(3).toBool();
-
-
-        out << senderLogin<<timeStr<<messageStr << isMyselfMessage;
-
-
-    }
-    else if (messageType == "clientList") {
-
-        for (const QVariant &param : parameters) {
-
-            out << param;
-        }
-    }
-    else if (messageType == "authSuccess")
+    for (const QVariant &param : parameters)
     {
-
-        QString username, login,password;
-
-        username = parameters.value(0).toString();
-        login = parameters.value(1).toString();
-        password = parameters.value(2).toString();
-
-        out << username << login<<password;
-
-
-    }
-    else if(messageType == "authError")
-    {
-        QString typeError = parameters.value(0).toString();
-
-        out << typeError;
-
-    }
-    else if(messageType == "regSuccess")
-    {
-        qDebug() << "Registration success";
-    }
-    else if(messageType == "regError")
-    {
-        qDebug() << "Login uniqueness error";
-
-    }
-    else {
-        qDebug() << "Unknown messageType: " << messageType;
-        return;
+        out << param;
     }
 
     out.device()->seek(0);
@@ -345,7 +141,8 @@ void Server::SendToClient(QTcpSocket *socket, const QString& messageType, const 
 void Server::updateClientList()
 {
     // Отправляем список клиентских имен всем подключенным клиентам
-    for (QTcpSocket *clientSocket : Sockets) {
+    for (QTcpSocket *clientSocket : Sockets)
+    {
         QVariantList userMapParams;
 
         // Получаем логин текущего клиента
@@ -355,7 +152,8 @@ void Server::updateClientList()
         QSet<QString> uniqueLogins;
 
 
-        for (auto it = userMap.constBegin(); it != userMap.constEnd(); ++it) {
+        for (auto it = userMap.constBegin(); it != userMap.constEnd(); ++it)
+        {
             QString userLogin = it.value().second;
 
             // Пропустить текущего пользователя и избежать добавления дубликатов
@@ -374,5 +172,171 @@ void Server::updateClientList()
 
         // Отправляем список остальных клиентов текущему клиенту
         SendToClient(clientSocket, "clientList", userMapParams);
+    }
+}
+
+void Server::messageProccessing(QDataStream &in)
+{
+    QVariant senderLoginVariant, recipientLoginVariant, messageStrVariant;
+
+
+    in >> senderLoginVariant >> recipientLoginVariant >> messageStrVariant;
+
+    QString senderLogin = senderLoginVariant.toString();
+    QString recipientLogin = recipientLoginVariant.toString();
+    QString messageStr = messageStrVariant.toString();
+
+    QString timeStr;
+    timeStr = QTime::currentTime().toString("hh:mm");
+
+
+    bool isMyselfMessage;
+
+    for (auto it = userMap.constBegin(); it != userMap.constEnd(); ++it)
+    {
+        // Проверяем, совпадает ли логин
+
+        if (it.value().second == recipientLogin) {  // Проверяем логин и исключаем отправителя
+
+            QVariantList messageParams;
+
+            messageParams << senderLogin;
+            messageParams << timeStr;
+            messageParams <<messageStr;
+            isMyselfMessage= false;
+            messageParams <<isMyselfMessage;
+
+            SendToClient(it.key(), "message", messageParams);
+
+        }
+        if(it.value().second == senderLogin )
+        {
+
+            QVariantList messageParams;
+
+            messageParams << recipientLogin;
+            messageParams << timeStr;
+            messageParams <<messageStr;
+            isMyselfMessage= true;
+            messageParams <<isMyselfMessage;
+
+            SendToClient(it.key(), "message", messageParams);
+
+
+        }
+    }
+}
+
+void Server::loginProccessing(QDataStream &in, QTcpSocket* socket)
+{
+
+    QVariant loginVariant, passwordVariant;
+    in >> loginVariant >> passwordVariant;
+
+
+    QString login = loginVariant.toString();
+    QString password = passwordVariant.toString();
+
+
+    QSqlQuery query;
+    query.prepare("SELECT username,login, password FROM users WHERE login = :login");
+    query.bindValue(":login", login);
+
+
+    if (query.exec())
+    {
+        if(query.next())
+        {
+
+            QString receivedUsername = query.value("username").toString();
+            QString receivedLogin = query.value("login").toString();
+            QString receivedPassword = query.value("password").toString();
+
+            if (receivedPassword == password)
+            {
+
+
+                QVariantList userParams;
+                userParams<<receivedUsername<<receivedLogin<<receivedPassword;
+
+                SendToClient(socket, "authSuccess",userParams);
+
+                isSendingAuthSuccess = true;
+
+                connect(socket, &QTcpSocket::bytesWritten, this, [this, socket, receivedUsername, receivedLogin](qint64 bytes) {
+
+                    if (isSendingAuthSuccess)
+                    {
+
+                        userMap.insert(socket, qMakePair(receivedUsername, receivedLogin));
+                        updateClientList();
+                        isSendingAuthSuccess = false;
+                    }
+                });
+            } else
+            {
+                QVariantList errorParams;
+                errorParams << "invalidPass";
+
+                SendToClient(socket, "authError", errorParams);
+            }
+        } else
+        {
+
+            QVariantList errorParams;
+            errorParams << "logNotFound";
+            SendToClient(socket, "authError", errorParams );
+        }
+    } else
+    {
+        qDebug() << "Request execution error:" << query.lastError().text();
+    }
+}
+
+void Server::registerProccessing(QDataStream &in, QTcpSocket *socket)
+{
+    QVariant usernameVariant, loginVariant, passwordVariant;
+    in >> usernameVariant >> loginVariant >> passwordVariant;
+
+    QString username = usernameVariant.toString();
+    QString login = loginVariant.toString();
+    QString password = passwordVariant.toString();
+
+    QSqlQuery query;
+
+    query.prepare("SELECT login FROM users WHERE login = :login");
+    query.bindValue(":login", login);
+
+    if(query.exec())
+    {
+        if(!query.next())
+        {
+
+            query.prepare("INSERT INTO users (username, login, password) VALUES (:username, :login, :password)");
+            query.bindValue(":username", username);
+            query.bindValue(":login", login);
+            query.bindValue(":password", password);
+
+            if (!query.exec())
+            {
+                qDebug() << "Data insertion error" << query.lastError().text();
+            } else
+            {
+                QVariantList completeRegParams;
+                completeRegParams << "registerSuccess";
+                SendToClient(socket, "regSuccess",  completeRegParams);
+            }
+        }
+        else
+        {
+            QVariantList rejectRegParams;
+            rejectRegParams << "uniqueError";
+
+            SendToClient(socket, "regError", rejectRegParams);
+        }
+    }
+    else
+    {
+        qDebug() << "Request execution error:" << query.lastError().text();
     }
 }

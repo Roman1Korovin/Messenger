@@ -21,27 +21,22 @@ class Authorization : public QMainWindow
 public:
     Authorization(NetworkManager *netManager,QWidget *parent = nullptr);
     ~Authorization();
+
     void reset();
 
 public slots:
     void slotAuthError(const QString errorType);
 
-private slots:
-    void on_registerButton_clicked();
-    void on_authButton_clicked();
+signals:
+    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
 
 private:
     Ui::MainWindow *ui;
     User* receivedUser;
     NetworkManager* netManager;
 
-
-
-signals:
-    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
-
-
-
-
+private slots:
+    void on_registerButton_clicked();
+    void on_authButton_clicked();
 };
 #endif // MAINWINDOW_H

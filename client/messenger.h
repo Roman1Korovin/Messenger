@@ -21,6 +21,14 @@ public:
     explicit Messenger(QWidget *parent = nullptr);
     ~Messenger();
 
+public slots:
+    void slotMessageReceived(const QString &senderLogin, const QString &timeStr, const QString &message, const bool &isMyselfMessage);
+    void slotClientListUpdated(const QVariantList &receivedClients);
+    void slotAuthComplete(const QVariantList userParams);
+    void slotErrorOccurred(QString errorMessage);
+
+signals:
+    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
 
 private:
     Ui::Messenger *ui;
@@ -30,8 +38,6 @@ private:
 
     QVariantList clients;
 
-
-
     struct MessageInfo {
         QString timeStr;
         QString messageText;
@@ -40,22 +46,9 @@ private:
         MessageInfo(const QString& time, const QString& message, bool isMyself)
             : timeStr(time), messageText(message), isMyselfMessage(isMyself) {}
     };
-
     QMap<QString, QList<MessageInfo>> userMessages;
 
     void reset();
-
-signals:
-    void signalSendToServer(const QString& messageType, const QVariantList& parameters);
-
-
-
-public slots:
-    void slotMessageReceived(const QString &senderLogin, const QString &timeStr, const QString &message, const bool &isMyselfMessage);
-    void slotClientListUpdated(const QVariantList &receivedClients);
-    void slotAuthComplete(const QVariantList userParams);
-    void slotErrorOccurred(QString errorMessage);
-
 
 private slots:   
     void on_sendButton_clicked();
@@ -63,7 +56,7 @@ private slots:
     void on_textEdit_textChanged();
     void on_userButton_clicked();
     void on_exitButton_clicked();
-    void slotItemSelectionChanged();
+    void on_ItemSelectionChanged();
     void on_userSearchEdit_textChanged(const QString &arg1);
 };
 

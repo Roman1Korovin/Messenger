@@ -9,7 +9,6 @@ Messenger::Messenger(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::Messenger)
 
-
 {
     ui->setupUi(this);
 
@@ -34,9 +33,6 @@ Messenger::Messenger(QWidget *parent) :
 
 
 
-
-
-
     connect(netManager, &NetworkManager::signalAuthComplete,this, &Messenger::slotAuthComplete);
 
     connect(netManager, &NetworkManager::signalMessageReceived, this, &Messenger::slotMessageReceived);
@@ -46,7 +42,7 @@ Messenger::Messenger(QWidget *parent) :
 
 
     connect(ui->textEdit,&MyTextEdit::enterPressed, this, &Messenger::on_sendEnter_pressed);
-    connect(ui->listWidget, &QListWidget::itemSelectionChanged, this, &Messenger::slotItemSelectionChanged);
+    connect(ui->listWidget, &QListWidget::itemSelectionChanged, this, &Messenger::on_ItemSelectionChanged);
 }
 
 Messenger::~Messenger()
@@ -87,31 +83,24 @@ void Messenger::slotMessageReceived(const QString &senderLogin, const QString &t
 
     userMessages[senderLogin].append(newMessage);
 
-
-
     QListWidgetItem *selectedItem = ui->listWidget->currentItem();
 
-
-
-    if (selectedItem) {
+    if (selectedItem)
+    {
         // Получаем данные пользователя, выбранного в listWidget
         QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
         QString selectedLogin = clientMap.value("login").toString();
 
-
-        if(isMyselfMessage){
+        if(isMyselfMessage)
+        {
             ui->textBrowser->append("[я]: " +timeStr + "  " + message);
         }
 
         // Сравниваем логин выбранного пользователя с логином отправителя сообщения
-        else if (selectedLogin == senderLogin) {
-
-
+        else if (selectedLogin == senderLogin)
+        {
             ui->textBrowser->append(timeStr + "  " + message);
-
-
         }
-
     }
 }
 
@@ -119,7 +108,8 @@ void Messenger::slotClientListUpdated(const QVariantList &receivedClients)
 {
     // Сохраняем логин выбранного пользователя, если он есть
     QString selectedLogin;
-    if (ui->listWidget->currentItem()) {
+    if (ui->listWidget->currentItem())
+    {
         QVariantMap selectedClientMap = ui->listWidget->currentItem()->data(Qt::UserRole).toMap();
         selectedLogin = selectedClientMap.value("login").toString();
     }
@@ -128,12 +118,14 @@ void Messenger::slotClientListUpdated(const QVariantList &receivedClients)
     ui->listWidget->clear();
     clients = receivedClients;
 
-    for (const QVariant &client : clients) {
+    for (const QVariant &client : clients)
+    {
         QVariantMap clientMap = client.toMap();  // Преобразуем элемент списка в QVariantMap
         QString username = clientMap.value("username").toString();
         QString login = clientMap.value("login").toString();
 
-        if (!userMessages.contains(login)) {
+        if (!userMessages.contains(login))
+        {
             userMessages[login] = QList<MessageInfo>();  // Добавляем пользователя с пустым списком сообщений
         }
 
@@ -142,49 +134,10 @@ void Messenger::slotClientListUpdated(const QVariantList &receivedClients)
         ui->listWidget->addItem(item);  // Добавляем элемент в listWidget
 
         // Если это ранее выбранный пользователь, восстанавливаем его выбор
-        if (login == selectedLogin) {
+        if (login == selectedLogin)
+        {
             ui->listWidget->setCurrentItem(item);  // Выбираем этого пользователя
         }
-    }
-}
-void Messenger::slotItemSelectionChanged()
-{
-    // Проверяем, есть ли выбранный элемент в списке
-    if (ui->listWidget->selectedItems().count() > 0) {
-        ui->textEdit->setReadOnly(false);  // Если есть выбранные элементы, делаем QTextEdit доступным
-
-        // Получаем текущий выбранный элемент
-        QListWidgetItem *selectedItem = ui->listWidget->currentItem();
-
-        if (selectedItem) {
-            // Получаем данные выбранного пользователя
-            QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
-            QString selectedLogin = clientMap.value("login").toString();
-
-            // Очищаем textBrowser перед отображением новых сообщений
-            ui->textBrowser->clear();
-
-            // Проверяем, есть ли сообщения для данного логина
-            if (userMessages.contains(selectedLogin)) {
-                // Выводим все сообщения, связанные с этим пользователем
-                for (const MessageInfo &messageInfo : userMessages[selectedLogin]) {
-                    // Форматируем сообщение, включая время и текст
-                    QString formattedMessage = messageInfo.timeStr + " " + messageInfo.messageText;
-
-
-                    if (messageInfo.isMyselfMessage) {
-                        formattedMessage = "[Я] " + formattedMessage;  // Помечаем сообщения от себя
-                    }
-
-                    ui->textBrowser->append(formattedMessage);  // Добавляем сообщение в textBrowser
-                }
-            }
-        }
-        ui->textEdit->setFocus();
-
-    } else {
-        ui->textEdit->setReadOnly(true);  // Если нет выбранных элементов, делаем QTextEdit недоступным
-        ui->textBrowser->clear();  // Очищаем textBrowser, если ничего не выбрано
     }
 }
 
@@ -194,7 +147,8 @@ void Messenger::on_sendButton_clicked()
     QVariantList messageParams;
 
     QListWidgetItem *selectedItem = ui->listWidget->currentItem();
-    if (selectedItem) {
+    if (selectedItem)
+    {
         QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
 
         messageParams << currentUser->getLogin();
@@ -207,23 +161,22 @@ void Messenger::on_sendButton_clicked()
         ui->textEdit->clear();
     }
 }
+
 void Messenger::on_sendEnter_pressed()
 {
     if(ui->textEdit->hasFocus() && !ui->textEdit->toPlainText().trimmed().isEmpty())
     {
         QVariantList messageParams;
         QListWidgetItem *selectedItem = ui->listWidget->currentItem();
-        if (selectedItem) {
+        if (selectedItem)
+        {
             QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
-
 
             messageParams << currentUser->getLogin();
             messageParams << clientMap.value("login").toString();
-
-
             messageParams << ui->textEdit->toPlainText();
-            emit signalSendToServer("message", messageParams);
 
+            emit signalSendToServer("message", messageParams);
 
             ui->textEdit->setFocus();
             ui->textEdit->clear();
@@ -231,11 +184,56 @@ void Messenger::on_sendEnter_pressed()
     }
 }
 
+void Messenger::on_ItemSelectionChanged()
+{
+    // Проверяем, есть ли выбранный элемент в списке
+    if (ui->listWidget->selectedItems().count() > 0)
+    {
+        ui->textEdit->setReadOnly(false);  // Если есть выбранные элементы, делаем QTextEdit доступным
+
+        // Получаем текущий выбранный элемент
+        QListWidgetItem *selectedItem = ui->listWidget->currentItem();
+
+        if (selectedItem)
+        {
+            // Получаем данные выбранного пользователя
+            QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
+            QString selectedLogin = clientMap.value("login").toString();
+
+            // Очищаем textBrowser перед отображением новых сообщений
+            ui->textBrowser->clear();
+
+            // Проверяем, есть ли сообщения для данного логина
+            if (userMessages.contains(selectedLogin))
+            {
+                // Выводим все сообщения, связанные с этим пользователем
+                for (const MessageInfo &messageInfo : userMessages[selectedLogin])
+                {
+                    // Форматируем сообщение, включая время и текст
+                    QString formattedMessage = messageInfo.timeStr + " " + messageInfo.messageText;
+
+                    if (messageInfo.isMyselfMessage)
+                    {
+                        formattedMessage = "[Я] " + formattedMessage;  // Помечаем сообщения от себя
+                    }
+
+                    ui->textBrowser->append(formattedMessage);  // Добавляем сообщение в textBrowser
+                }
+            }
+        }
+        ui->textEdit->setFocus();
+
+    } else
+    {
+        ui->textEdit->setReadOnly(true);  // Если нет выбранных элементов, делаем QTextEdit недоступным
+        ui->textBrowser->clear();  // Очищаем textBrowser, если ничего не выбрано
+    }
+}
+
+
 
 void Messenger::on_textEdit_textChanged()
 {
-
-
     if(ui->textEdit->toPlainText().trimmed().isEmpty())
     {
         ui->sendButton->setEnabled(false);
@@ -256,11 +254,26 @@ void Messenger::on_userButton_clicked()
         ui->stackedWidget->setCurrentIndex(0);
 }
 
-void Messenger::on_exitButton_clicked()
+
+
+void Messenger::on_userSearchEdit_textChanged(const QString &searchText)
 {
-    auth->show();
-    this->close();
-    this->reset();
+    // Перебираем все элементы в listWidget
+    for (int i = 0; i < ui->listWidget->count(); ++i)
+    {
+        QListWidgetItem *item = ui->listWidget->item(i);
+
+        // Получаем username из элемента списка
+        QString username = item->text();
+
+        // Проверяем, содержится ли введенный текст в username (без учета регистра)
+        if (username.contains(searchText, Qt::CaseInsensitive))
+        {
+            item->setHidden(false);  // Показываем элемент
+        } else {
+            item->setHidden(true);  // Скрываем элемент, если не совпадает
+        }
+    }
 }
 
 void Messenger::reset()
@@ -275,23 +288,9 @@ void Messenger::reset()
     ui->passwordLabel->setText("Ваш пароль:");
 }
 
-
-
-
-void Messenger::on_userSearchEdit_textChanged(const QString &searchText)
+void Messenger::on_exitButton_clicked()
 {
-    // Перебираем все элементы в listWidget
-    for (int i = 0; i < ui->listWidget->count(); ++i) {
-        QListWidgetItem *item = ui->listWidget->item(i);
-
-        // Получаем username из элемента списка
-        QString username = item->text();
-
-        // Проверяем, содержится ли введенный текст в username (без учета регистра)
-        if (username.contains(searchText, Qt::CaseInsensitive)) {
-            item->setHidden(false);  // Показываем элемент
-        } else {
-            item->setHidden(true);  // Скрываем элемент, если не совпадает
-        }
-    }
+    auth->show();
+    this->close();
+    this->reset();
 }
