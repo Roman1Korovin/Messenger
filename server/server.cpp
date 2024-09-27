@@ -1,5 +1,7 @@
 #include "server.h"
 #include "QTimer"
+#include <QThread>
+
 
 Server::Server()
 {
@@ -94,36 +96,57 @@ void Server::slotReadyRead()
 
         if (messageType == "message") {
 
-            QString login, messageStr;
+            QString senderLogin,recipientLogin, messageStr;
+
+
+            in >> senderLogin>> recipientLogin>>  messageStr;
+
             QString timeStr;
-
-            in >> login>>  messageStr;
-
             timeStr = QTime::currentTime().toString("hh:mm");
 
 
 
-            QVariantList messageParams;
-            messageParams << login;
-            messageParams << timeStr;
-            messageParams <<messageStr;
 
 
 
-            qDebug()<<"Map: "<<userMap;
+
+
+            bool isMyselfMessage;
 
             for (auto it = userMap.constBegin(); it != userMap.constEnd(); ++it) {
-                    // Проверяем, совпадает ли логин
+                // Проверяем, совпадает ли логин
 
-                qDebug()<<"Value.first = "<<it.value().first << " log:" <<login;
+                if (it.value().second == recipientLogin) {  // Проверяем логин и исключаем отправителя
 
-                qDebug()<<"it.key = "<<it.key() << " socket:" <<socket;
+                    QVariantList messageParams;
 
-                    if (it.value().second == login && it.key() != socket) {  // Проверяем логин и исключаем отправителя
+                    messageParams << senderLogin;
+                    messageParams << timeStr;
+                    messageParams <<messageStr;
+                    isMyselfMessage= false;
+                    messageParams <<isMyselfMessage;
 
-                        qDebug() << it.key() << " here  "<< messageParams;
-                        SendToClient(it.key(), "message", messageParams);  // Отправляем сообщение
-                    }
+                    SendToClient(it.key(), "message", messageParams);
+
+
+                }
+                if(it.value().second == senderLogin )
+                {
+
+                    QVariantList messageParams;
+
+                    messageParams << recipientLogin;
+                    messageParams << timeStr;
+                    messageParams <<messageStr;
+                    isMyselfMessage= true;
+                    messageParams <<isMyselfMessage;
+
+                    SendToClient(it.key(), "message", messageParams);
+
+
+                }
+
+
             }
 
 
@@ -150,22 +173,22 @@ void Server::slotReadyRead()
                     QString receivedPassword = query.value("password").toString();
 
                     if (receivedPassword == password) {
-                        // Успешная авторизация
+
 
                         QVariantList userParams;
                         userParams<<receivedUsername<<receivedLogin<<receivedPassword;
 
                         SendToClient(socket, "authSuccess",userParams);
 
-                        isSendingAuthSuccess = true;  // Устанавливаем флаг
+                        isSendingAuthSuccess = true;
 
                         connect(socket, &QTcpSocket::bytesWritten, this, [this, socket, receivedUsername, receivedLogin](qint64 bytes) {
-                            // Если отправка сообщения об успешной авторизации завершена
+
                             if (isSendingAuthSuccess) {
-                                // Теперь обновляем список клиентов
+
                                 userMap.insert(socket, qMakePair(receivedUsername, receivedLogin));
                                 updateClientList();
-                                isSendingAuthSuccess = false;  // Сбрасываем флаг
+                                isSendingAuthSuccess = false;
                             }
                         });
 
@@ -174,14 +197,14 @@ void Server::slotReadyRead()
 
 
                     } else {
-                        // Неправильный пароль
+
                         QVariantList errorParams;
                         errorParams << "invalidPass";
 
                         SendToClient(socket, "authError", errorParams);
                     }
                 } else {
-                    // Логин не найден
+
                     QVariantList errorParams;
                     errorParams << "logNotFound";
                     SendToClient(socket, "authError", errorParams );
@@ -207,7 +230,7 @@ void Server::slotReadyRead()
             {
                 if(!query.next()) // Пользователь с таким логином не найден
                 {
-                    // Прячем сообщение об ошибке и вставляем нового пользователя в базу данных
+
                     query.prepare("INSERT INTO users (username, login, password) VALUES (:username, :login, :password)");
                     query.bindValue(":username", username);
                     query.bindValue(":login", login);
@@ -223,7 +246,7 @@ void Server::slotReadyRead()
                 }
                 else
                 {
-                    // Если логин уже существует
+
 
                     QVariantList rejectRegParams;
                     rejectRegParams << "uniqueError";
@@ -259,10 +282,19 @@ void Server::SendToClient(QTcpSocket *socket, const QString& messageType, const 
 
     if (messageType == "message") {
 
-        QString timeStr = parameters.value(0).toString();
-        QString messageStr = parameters.value(1).toString();
+        QString senderLogin, timeStr, messageStr;
 
-        out << timeStr << messageStr; // Для текстового сообщения
+        bool isMyselfMessage;
+
+        senderLogin = parameters.value(0).toString();
+        timeStr = parameters.value(1).toString();
+        messageStr = parameters.value(2).toString();
+        isMyselfMessage = parameters.value(3).toBool();
+
+
+        out << senderLogin<<timeStr<<messageStr << isMyselfMessage;
+
+
     }
     else if (messageType == "clientList") {
 
@@ -270,7 +302,6 @@ void Server::SendToClient(QTcpSocket *socket, const QString& messageType, const 
 
             out << param;
         }
-        qDebug()<<parameters;
     }
     else if (messageType == "authSuccess")
     {
@@ -323,7 +354,7 @@ void Server::updateClientList()
         // Используем QSet для отслеживания уникальных логинов
         QSet<QString> uniqueLogins;
 
-        // Собираем данные для отправки, исключая дубликаты и данные о текущем клиенте
+
         for (auto it = userMap.constBegin(); it != userMap.constEnd(); ++it) {
             QString userLogin = it.value().second;
 

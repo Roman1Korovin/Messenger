@@ -30,6 +30,19 @@ private:
 
     QVariantList clients;
 
+
+
+    struct MessageInfo {
+        QString timeStr;
+        QString messageText;
+        bool isMyselfMessage;
+
+        MessageInfo(const QString& time, const QString& message, bool isMyself)
+            : timeStr(time), messageText(message), isMyselfMessage(isMyself) {}
+    };
+
+    QMap<QString, QList<MessageInfo>> userMessages;
+
     void reset();
 
 signals:
@@ -38,7 +51,7 @@ signals:
 
 
 public slots:
-    void slotMessageReceived(const QString &timeStr, const QString &message);
+    void slotMessageReceived(const QString &senderLogin, const QString &timeStr, const QString &message, const bool &isMyselfMessage);
     void slotClientListUpdated(const QVariantList &receivedClients);
     void slotAuthComplete(const QVariantList userParams);
     void slotErrorOccurred(QString errorMessage);
@@ -51,6 +64,7 @@ private slots:
     void on_userButton_clicked();
     void on_exitButton_clicked();
     void slotItemSelectionChanged();
+    void on_userSearchEdit_textChanged(const QString &arg1);
 };
 
 #endif // MESSENGER_H

@@ -49,9 +49,9 @@ void Authorization::on_authButton_clicked()
 
     if(login.isEmpty())
     {
-         ui->loginEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
-         ui->loginErrorLabel->hide();
-         ui->passwordErrorLabel->hide();
+        ui->loginEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+        ui->loginErrorLabel->hide();
+        ui->passwordErrorLabel->hide();
     }
     else
     {
@@ -60,7 +60,7 @@ void Authorization::on_authButton_clicked()
 
     if(password.isEmpty())
     {
-         ui->passwordEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+        ui->passwordEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
 
     }
     else
@@ -79,17 +79,17 @@ void Authorization::on_authButton_clicked()
 
         emit signalSendToServer("login",loginParams);
     }
-        else {
-            ui->loginErrorLabel->hide();
-            ui->passwordErrorLabel->hide();
-        }
+    else {
+        ui->loginErrorLabel->hide();
+        ui->passwordErrorLabel->hide();
+    }
 }
 
 
 //кнопка для перехда на форму регитсрации
 void Authorization::on_registerButton_clicked()
 {
-        this->reset();
+    this->reset();
 
     Registration *w = new Registration(netManager);
     w->setModal(true);

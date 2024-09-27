@@ -28,7 +28,7 @@ private:
     quint16 nextBlockSize;
 
 signals:
-    void signalMessageReceived(const QString &timeStr, const QString &message);
+    void signalMessageReceived(const QString &senderLogin, const QString &timeStr, const QString &message, const bool &isMyselfMessage);
     void signalClientListUpdated(const QVariantList clients);
     void signalErrorOccurred(const QString errorMessage);
     void signalAuthComplete(const QVariantList userParams);

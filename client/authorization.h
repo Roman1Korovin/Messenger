@@ -21,7 +21,7 @@ class Authorization : public QMainWindow
 public:
     Authorization(NetworkManager *netManager,QWidget *parent = nullptr);
     ~Authorization();
-        void reset();
+    void reset();
 
 public slots:
     void slotAuthError(const QString errorType);

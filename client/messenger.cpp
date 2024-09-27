@@ -9,26 +9,32 @@ Messenger::Messenger(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::Messenger)
 
-//    currentUser(user)
 
-{   netManager = new NetworkManager();
+{
+    ui->setupUi(this);
+
+    netManager = new NetworkManager();
     netManager->connectToServer();
 
-    ui->setupUi(this);
+
     auth = new Authorization(netManager);
     auth->show();
-
 
 
     ui->stackedWidget->setCurrentIndex(1);
 
     ui->textEdit->setReadOnly(true);
-
-
-
-    //замена элемента textEdit
-    ui->sendButton->setEnabled(false);
     ui->textEdit->setFocus();
+
+    ui->sendButton->setEnabled(false);
+
+    QString message = "Добро пожаловать в мессенджер";
+    QString formattedMessage = QString("<div style='text-align:center; font-size:24px;'>%1</div>").arg(message);
+    ui->textBrowser->append(formattedMessage);
+
+
+
+
 
 
     connect(netManager, &NetworkManager::signalAuthComplete,this, &Messenger::slotAuthComplete);
@@ -50,7 +56,6 @@ Messenger::~Messenger()
 
 void Messenger::slotErrorOccurred(QString errorMessage)
 {
-    qDebug() <<"fsafs";
     QMessageBox::critical(this, "Ошибка", errorMessage);
     QApplication::exit();
 }
@@ -75,77 +80,169 @@ void Messenger::slotAuthComplete(const QVariantList userParams)
 
 
 
-void Messenger::slotMessageReceived(const QString &timeStr, const QString &message)
+void Messenger::slotMessageReceived(const QString &senderLogin, const QString &timeStr, const QString &message, const bool &isMyselfMessage)
 {
-    ui->textBrowser->append(timeStr + "  " + message);
+
+    MessageInfo newMessage(timeStr, message, isMyselfMessage);
+
+    userMessages[senderLogin].append(newMessage);
+
+
+
+    QListWidgetItem *selectedItem = ui->listWidget->currentItem();
+
+
+
+    if (selectedItem) {
+        // Получаем данные пользователя, выбранного в listWidget
+        QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
+        QString selectedLogin = clientMap.value("login").toString();
+
+
+        if(isMyselfMessage){
+            ui->textBrowser->append("[я]: " +timeStr + "  " + message);
+        }
+
+        // Сравниваем логин выбранного пользователя с логином отправителя сообщения
+        else if (selectedLogin == senderLogin) {
+
+
+            ui->textBrowser->append(timeStr + "  " + message);
+
+
+        }
+
+    }
 }
 
 void Messenger::slotClientListUpdated(const QVariantList &receivedClients)
 {
+    // Сохраняем логин выбранного пользователя, если он есть
+    QString selectedLogin;
+    if (ui->listWidget->currentItem()) {
+        QVariantMap selectedClientMap = ui->listWidget->currentItem()->data(Qt::UserRole).toMap();
+        selectedLogin = selectedClientMap.value("login").toString();
+    }
+
+    // Очищаем список
     ui->listWidget->clear();
     clients = receivedClients;
 
-    qDebug() << clients;
-
     for (const QVariant &client : clients) {
         QVariantMap clientMap = client.toMap();  // Преобразуем элемент списка в QVariantMap
-        QString username = clientMap.value("username").toString();  // Извлекаем username
+        QString username = clientMap.value("username").toString();
+        QString login = clientMap.value("login").toString();
+
+        if (!userMessages.contains(login)) {
+            userMessages[login] = QList<MessageInfo>();  // Добавляем пользователя с пустым списком сообщений
+        }
 
         QListWidgetItem *item = new QListWidgetItem(username);  // Создаем новый элемент
         item->setData(Qt::UserRole, clientMap);  // Сохраняем QVariantMap в качестве пользовательских данных
         ui->listWidget->addItem(item);  // Добавляем элемент в listWidget
+
+        // Если это ранее выбранный пользователь, восстанавливаем его выбор
+        if (login == selectedLogin) {
+            ui->listWidget->setCurrentItem(item);  // Выбираем этого пользователя
+        }
     }
 }
-// Реализация слота
-void Messenger::slotItemSelectionChanged() {
+void Messenger::slotItemSelectionChanged()
+{
+    // Проверяем, есть ли выбранный элемент в списке
     if (ui->listWidget->selectedItems().count() > 0) {
         ui->textEdit->setReadOnly(false);  // Если есть выбранные элементы, делаем QTextEdit доступным
+
+        // Получаем текущий выбранный элемент
+        QListWidgetItem *selectedItem = ui->listWidget->currentItem();
+
+        if (selectedItem) {
+            // Получаем данные выбранного пользователя
+            QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
+            QString selectedLogin = clientMap.value("login").toString();
+
+            // Очищаем textBrowser перед отображением новых сообщений
+            ui->textBrowser->clear();
+
+            // Проверяем, есть ли сообщения для данного логина
+            if (userMessages.contains(selectedLogin)) {
+                // Выводим все сообщения, связанные с этим пользователем
+                for (const MessageInfo &messageInfo : userMessages[selectedLogin]) {
+                    // Форматируем сообщение, включая время и текст
+                    QString formattedMessage = messageInfo.timeStr + " " + messageInfo.messageText;
+
+
+                    if (messageInfo.isMyselfMessage) {
+                        formattedMessage = "[Я] " + formattedMessage;  // Помечаем сообщения от себя
+                    }
+
+                    ui->textBrowser->append(formattedMessage);  // Добавляем сообщение в textBrowser
+                }
+            }
+        }
+        ui->textEdit->setFocus();
+
     } else {
-        ui->textEdit->setReadOnly(true);   // Если нет выбранных элементов, делаем его недоступным
+        ui->textEdit->setReadOnly(true);  // Если нет выбранных элементов, делаем QTextEdit недоступным
+        ui->textBrowser->clear();  // Очищаем textBrowser, если ничего не выбрано
     }
 }
-
 
 void Messenger::on_sendButton_clicked()
 {
+
     QVariantList messageParams;
 
     QListWidgetItem *selectedItem = ui->listWidget->currentItem();
     if (selectedItem) {
-        QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();  // Получаем QVariantMap из пользовательских данных
+        QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
 
-        // Добавляем нужные параметры в messageParams
-        messageParams << clientMap.value("login").toString();     // Логин
-        // Добавьте сюда другие поля, если необходимо
+        messageParams << currentUser->getLogin();
+        messageParams << clientMap.value("login").toString();
 
-        messageParams << ui->textEdit->toPlainText();  // Добавляем текст из QTextEdit
-        emit signalSendToServer("message", messageParams);  // Отправляем сообщение на сервер
+        messageParams << ui->textEdit->toPlainText();
+        emit signalSendToServer("message", messageParams);
+
+        ui->textEdit->setFocus();
+        ui->textEdit->clear();
     }
-
-    ui->textEdit->setFocus();
-    ui->textEdit->clear();
 }
 void Messenger::on_sendEnter_pressed()
 {
     if(ui->textEdit->hasFocus() && !ui->textEdit->toPlainText().trimmed().isEmpty())
     {
         QVariantList messageParams;
-        messageParams<<ui->textEdit->toPlainText();
-        emit signalSendToServer("message",  messageParams);
-        ui->textEdit->clear();
+        QListWidgetItem *selectedItem = ui->listWidget->currentItem();
+        if (selectedItem) {
+            QVariantMap clientMap = selectedItem->data(Qt::UserRole).toMap();
+
+
+            messageParams << currentUser->getLogin();
+            messageParams << clientMap.value("login").toString();
+
+
+            messageParams << ui->textEdit->toPlainText();
+            emit signalSendToServer("message", messageParams);
+
+
+            ui->textEdit->setFocus();
+            ui->textEdit->clear();
+        }
     }
 }
 
 
 void Messenger::on_textEdit_textChanged()
 {
+
+
     if(ui->textEdit->toPlainText().trimmed().isEmpty())
     {
         ui->sendButton->setEnabled(false);
     }
     else
     {
-       ui->sendButton->setEnabled(true);
+        ui->sendButton->setEnabled(true);
     }
 }
 
@@ -180,3 +277,21 @@ void Messenger::reset()
 
 
 
+
+void Messenger::on_userSearchEdit_textChanged(const QString &searchText)
+{
+    // Перебираем все элементы в listWidget
+    for (int i = 0; i < ui->listWidget->count(); ++i) {
+        QListWidgetItem *item = ui->listWidget->item(i);
+
+        // Получаем username из элемента списка
+        QString username = item->text();
+
+        // Проверяем, содержится ли введенный текст в username (без учета регистра)
+        if (username.contains(searchText, Qt::CaseInsensitive)) {
+            item->setHidden(false);  // Показываем элемент
+        } else {
+            item->setHidden(true);  // Скрываем элемент, если не совпадает
+        }
+    }
+}

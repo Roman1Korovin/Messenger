@@ -3,19 +3,19 @@
 #include <QDebug>
 
 NetworkManager::NetworkManager(QObject *parent)
-    : QObject(parent), // Передаем родителя
+    : QObject(parent),
       nextBlockSize(0)
 {
-    socket = new QTcpSocket(this); // Здесь 'this' будет родителем для QTcpSocket
+    socket = new QTcpSocket(this);
 
 
     connect(socket, &QTcpSocket::connected, this, []() {
-        qDebug() << "Connected to server";  // Сообщение об успешном подключении
+        qDebug() << "Connected to server";
     });
 
     connect(socket, &QTcpSocket::readyRead, this, &NetworkManager::slotReadyRead);
     connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
-                this, &NetworkManager::slotErrorOccurred);
+            this, &NetworkManager::slotErrorOccurred);
 }
 
 void NetworkManager::connectToServer()
@@ -27,79 +27,80 @@ void NetworkManager::connectToServer()
 void NetworkManager::slotSendToServer(const QString& messageType, const QVariantList& parameters)
 {
 
-        QByteArray data;
-        QDataStream out(&data, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_5_14);
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_14);
 
 
-        out << quint16(0) << messageType;
+    out << quint16(0) << messageType;
 
-        if (messageType == "message") {
+    if (messageType == "message") {
 
-            QString login = parameters.value(0).toString();
-            QString messageStr = parameters.value(1).toString();
+        QString senderLogin = parameters.value(0).toString();
+        QString recipientLogin = parameters.value(1).toString();
+        QString messageStr = parameters.value(2).toString();
 
-            qDebug() <<"Log: "<< login << "msg: "<< messageStr;
-            out << login << messageStr;  // Отправка текстового сообщения с временем
-           }
-           // Возможны и другие типы сообщений
-           else if (messageType == "login") {
-               QString login = parameters.value(0).toString();
-               QString password = parameters.value(1).toString();
-               out << login << password;
-           }
-        else if(messageType == "register")
-        {
-            QString username = parameters.value(0).toString();
-            QString login = parameters.value(1).toString();
-            QString password = parameters.value(2).toString();
-            out << username<<login<<password;
-        }
 
-           else {
-               qDebug() << "Unknown messageType: " << messageType;
-               return;
-           }
+        out << senderLogin <<recipientLogin << messageStr;
+    }
 
-        out.device()->seek(0);
-        out<<quint16(data.size()-sizeof(quint16));
+    else if (messageType == "login") {
+        QString login = parameters.value(0).toString();
+        QString password = parameters.value(1).toString();
+        out << login << password;
+    }
+    else if(messageType == "register")
+    {
+        QString username = parameters.value(0).toString();
+        QString login = parameters.value(1).toString();
+        QString password = parameters.value(2).toString();
+        out << username<<login<<password;
+    }
 
-        qint64 bytesWritten = socket->write(data);
-        if (bytesWritten == -1) {
-            qDebug() << "Failed to write data to server";
-        } else {
-            qDebug() << "Sent" << bytesWritten << "bytes to server";
-        }
+    else {
+        qDebug() << "Unknown messageType: " << messageType;
+        return;
+    }
+
+    out.device()->seek(0);
+    out<<quint16(data.size()-sizeof(quint16));
+
+    qint64 bytesWritten = socket->write(data);
+    if (bytesWritten == -1) {
+        qDebug() << "Failed to write data to server";
+    } else {
+        qDebug() << "Sent" << bytesWritten << "bytes to server";
+    }
 }
 
 
 
- void NetworkManager::slotErrorOccurred(QAbstractSocket::SocketError socketError) {
-            qDebug() << "Socket error occurred:" << socketError;
+void NetworkManager::slotErrorOccurred(QAbstractSocket::SocketError socketError) {
+    qDebug() << "Socket error occurred:" << socketError;
 
-            QString errorMessage;
+    QString errorMessage;
 
-            switch (socketError) {
-                        case QAbstractSocket::RemoteHostClosedError:
-                            errorMessage = "Соединение с сервером потеряно (сервер закрыл соединение).";
-                            break;
-                        case QAbstractSocket::HostNotFoundError:
-                            errorMessage = "Не удается найти сервер (проверьте адрес).";
-                            break;
-                        case QAbstractSocket::ConnectionRefusedError:
-                            errorMessage = "Подключение отклонено (сервер недоступен).";
-                            break;
-                        case QAbstractSocket::NetworkError:
-                            errorMessage = "Ошибка сети (проверьте интернет-соединение).";
-                            break;
-                        default:
-                            errorMessage = "Произошла ошибка подключения к серверу.";
-                            break;
-                    }
-            qDebug() <<errorMessage;
-            emit signalErrorOccurred(errorMessage);
+    switch (socketError) {
+    case QAbstractSocket::RemoteHostClosedError:
+        errorMessage = "Соединение с сервером потеряно (сервер закрыл соединение).";
+        break;
+    case QAbstractSocket::HostNotFoundError:
+        errorMessage = "Не удается найти сервер (проверьте адрес).";
+        break;
+    case QAbstractSocket::ConnectionRefusedError:
+        errorMessage = "Подключение отклонено (сервер недоступен).";
+        break;
+    case QAbstractSocket::NetworkError:
+        errorMessage = "Ошибка сети (проверьте интернет-соединение).";
+        break;
+    default:
+        errorMessage = "Произошла ошибка подключения к серверу.";
+        break;
+    }
+    qDebug() <<errorMessage;
+    emit signalErrorOccurred(errorMessage);
 
-        }
+}
 
 void NetworkManager::slotReadyRead()
 {
@@ -109,8 +110,8 @@ void NetworkManager::slotReadyRead()
     in.setVersion(QDataStream::Qt_5_14);
 
     if (in.status() != QDataStream::Ok) {
-            qDebug() << "DataStream error";
-            return;
+        qDebug() << "DataStream error";
+        return;
     }
 
     for (;;)
@@ -135,21 +136,24 @@ void NetworkManager::slotReadyRead()
 
         if (messageType == "message")
         {
-            QString timeStr, str;
-            in >> timeStr >> str;
-            emit signalMessageReceived(timeStr, str);
+            QString senderLogin, timeStr, messageStr;
+            bool isMyselfMessage;
+
+            in >>senderLogin >> timeStr >> messageStr >> isMyselfMessage;
+
+            emit signalMessageReceived(senderLogin,  timeStr,messageStr, isMyselfMessage);
         }
         else if (messageType == "clientList")
         {
 
-              QVariantList users;
+            QVariantList users;
 
 
             while (!in.atEnd()) {
 
                 QVariant user;
 
-                in >> user;  // Чтение следующего QVariantMap объекта
+                in >> user;
 
                 users.append(user);
             }
@@ -158,7 +162,6 @@ void NetworkManager::slotReadyRead()
             emit signalClientListUpdated(users);
 
 
-            // После того как все данные считаны, отправляем их через сигнал
 
         }
         else if (messageType == "authSuccess")
@@ -197,9 +200,9 @@ void NetworkManager::slotReadyRead()
 
         }
 
-     else {
-        qDebug() << "Unknown messageType received:" << messageType;
-    }
+        else {
+            qDebug() << "Unknown messageType received:" << messageType;
+        }
         nextBlockSize = 0;
         break;
     }

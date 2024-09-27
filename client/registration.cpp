@@ -47,16 +47,16 @@ void Registration::on_confirmButton_clicked()
 
     if(username.isEmpty())
     {
-         ui->usernameEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+        ui->usernameEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
     }
     else
     {
-       ui->usernameEdit->setStyleSheet("");
+        ui->usernameEdit->setStyleSheet("");
     }
 
     if(login.isEmpty())
     {
-         ui->loginEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+        ui->loginEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
     }
     else
     {
@@ -65,8 +65,8 @@ void Registration::on_confirmButton_clicked()
 
     if(password.isEmpty() || passwordConfirm.isEmpty() || password!=passwordConfirm )
     {
-         ui->passwordEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
-         ui->password2Edit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+        ui->passwordEdit->setStyleSheet("border: none; border-bottom: 2px solid red;");
+        ui->password2Edit->setStyleSheet("border: none; border-bottom: 2px solid red;");
     }
     else
     {
@@ -92,41 +92,9 @@ void Registration::on_confirmButton_clicked()
 
         emit signalSendToServer("register", registerParams);
 
-
-//        QSqlQuery query;
-
-//        query.prepare("SELECT login FROM users WHERE login = :login");
-//        query.bindValue(":login", login);
-//        if(query.exec())
-//        {
-//            if(!query.next())
-//            {
-//                ui->identityErrorLabel->hide();
-
-//                query.prepare("INSERT INTO users (username, login, password) VALUES (:username, :login, :password)");
-//                query.bindValue(":username", username);
-//                query.bindValue(":login", login);
-//                query.bindValue(":password", password);
-
-//                if (!query.exec()) {
-//                    QMessageBox::critical(this, "Ошибка", "Ошибка обращения к базе данных!");
-//                       qDebug() << "Ошибка вставки данных:" << query.lastError().text();
-//                   } else {
-//                       QMessageBox::information(this, "Сообщение", "Регистрация успешна! Выполните вход в окне с авторизацией.");
-//                       qDebug() << "Пользователь успешно зарегистрирован!";
-//                       this->close();
-//                   }
-//            }
-//            else
-//            {
-//                ui->identityErrorLabel->show();
-//                qDebug() <<"Пользователь есть уже";
-//            }
-//        }
     }
 }
 
-//кнопка возвращения к авторизации
 void Registration::on_returnButton_clicked()
 {
     this->close();
